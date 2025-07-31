@@ -1,87 +1,72 @@
-import React from 'react';
-import { Button } from '../ui/button';
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const Home = () => {
     return (
         <div className="min-h-screen bg-cover bg-center"
-            style={{ backgroundImage: "url('./public/laundry-logo.jpg')",
-                backgroundSize: 'contain',
-                backgroundRepeat: 'repeat'
-             }}
-            
+            style={{
+                backgroundImage: "url('/laundry-logo.jpg')",
+            }}
         >
-            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-20'>
-                <div className="container mx-auto px-4 py-8">
-                    <div className="text-center mb-12">
-                        <h1 className="text-5xl font-bold text-[#126280] mb-4">
-                            Fresh & Clean Laundry Services
-                        </h1>
-                        <p className="text-xl text-gray-700 mb-8">
-                            Professional Washing, Dry Cleaning & Laundry Services
-                        </p>
-                        <Button className="bg-[#126280] text-white px-8 py-3 text-lg">
-                            Book Now
-                        </Button>
+            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-20'>
+                <div className='flex flex-col md:flex-row items-center justify-center px-4 md:px-60 min-h-[500px] gap-6 md:gap-0'>
+                    {/* Left Side - Image */}
+                    <div className="w-full md:w-1/2 flex justify-center hidden md:block">
+                        <img
+                            src="/laundry-logo.jpg"
+                            alt="Login Visual"
+                            className="w-[200px] md:w-[260px] h-[240px] md:h-[300px] rounded-[20%]"
+                            style={{
+                                boxShadow: "12px 0 20px -2px rgba(0, 0, 0, 0.6"
+                            }}
+                        />
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8 mt-12">
-                        <div className="bg-white p-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform">
-                            <h2 className="text-2xl font-semibold mb-4 text-[#126280]">Premium Wash & Fold</h2>
-                            <p className="text-gray-600 mb-4">
-                                Expert washing, drying, and folding services for all your daily wear
-                            </p>
-                            <ul className="text-gray-600">
-                                <li>✓ 24-Hour Turnaround</li>
-                                <li>✓ Eco-Friendly Detergents</li>
-                                <li>✓ Fabric-Specific Care</li>
-                            </ul>
-                        </div>
+                    {/* Right Side - Login Form */}
+                    <div className="w-full md:w-1/2 flex items-center justify-center p-2 md:p-4">
+                        <Card className="w-full max-w-md shadow-lg bg-[#E4F4FC]/80">
+                            <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
+                                <div className="flex items-center justify-center mb-2 md:mb-4 ">
+                                    <img
+                                        src="/user.jpg"
+                                        alt="Login Visual"
+                                        className="w-[70px] md:w-[90px] h-[70px] md:h-[90px] rounded-[100%]"
+                                    />
+                                </div>
 
-                        <div className="bg-white p-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform">
-                            <h2 className="text-2xl font-semibold mb-4 text-[#126280]">Dry Cleaning</h2>
-                            <p className="text-gray-600 mb-4">
-                                Professional dry cleaning for your delicate and special garments
-                            </p>
-                            <ul className="text-gray-600">
-                                <li>✓ Stain Removal</li>
-                                <li>✓ Gentle Processing</li>
-                                <li>✓ Premium Finishing</li>
-                            </ul>
-                        </div>
+                                <h2 className="text-xl md:text-2xl font-bold text-center">Login</h2>
+                                <div className="space-y-2">
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="Username/Email"
+                                        className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-10 md:h-12"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        placeholder="Password"
+                                        className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base h-10 md:h-12"
+                                    />
+                                </div>
+                                <p className="text-sm md:text-md text-gray-600 mt-2 md:mt-4 text-right font-semibold">
+                                    <a href="/Forgotpassword" className="text-blue-600 hover:underline">
+                                        Forgot password
+                                    </a>
+                                </p>
 
-                        <div className="bg-white p-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform">
-                            <h2 className="text-2xl font-semibold mb-4 text-[#126280]">Express Service</h2>
-                            <p className="text-gray-600 mb-4">
-                                Same-day service for your urgent laundry needs
-                            </p>
-                            <ul className="text-gray-600">
-                                <li>✓ 6-Hour Service</li>
-                                <li>✓ Priority Handling</li>
-                                <li>✓ Express Delivery</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="mt-12 text-center bg-white p-8 rounded-lg shadow-lg">
-                        <h2 className="text-3xl font-bold text-[#126280] mb-6">Why Choose Us?</h2>
-                        <div className="grid md:grid-cols-4 gap-6">
-                            <div>
-                                <h3 className="font-semibold text-xl mb-2">Professional Care</h3>
-                                <p className="text-gray-600">Expert handling of all fabric types</p>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-xl mb-2">Quick Service</h3>
-                                <p className="text-gray-600">Fast turnaround times</p>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-xl mb-2">Quality Results</h3>
-                                <p className="text-gray-600">Satisfaction guaranteed</p>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-xl mb-2">Affordable</h3>
-                                <p className="text-gray-600">Competitive pricing</p>
-                            </div>
-                        </div>
+                                <Button className="w-full mt-2 md:mt-4 bg-[#126280] hover:bg-[#126280]/10 h-10 md:h-12 text-sm md:text-base">
+                                    Login
+                                </Button>
+                                <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
+                                    Don't have an account? <a href="/register" className="text-blue-600 font-semibold hover:underline">Register</a>
+                                </p>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>
