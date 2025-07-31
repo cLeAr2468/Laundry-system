@@ -7,8 +7,6 @@ const Services = () => {
             className="min-h-screen bg-cover bg-center"
             style={{
                 backgroundImage: "url('./public/laundry-logo.jpg')",
-                backgroundSize: 'contain',
-                backgroundRepeat: 'repeat',
             }}
         >
             <div className="bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-20">

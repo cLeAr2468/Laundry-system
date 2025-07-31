@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../ui/button.jsx';
-import { Menu, X } from 'lucide-react'; // Optional: using Lucide for icons
+import { Menu, X } from 'lucide-react';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
