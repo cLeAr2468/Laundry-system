@@ -1,13 +1,26 @@
-
+// App.js
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/layout/header';
+import Home from './components/layout/home';
+import About from './components/layout/about';
+import Services from './components/layout/services';
+import Prices from './components/layout/prices';
 
 function App() {
-  
-
   return (
-    <>
-     <h1>Hello World</h1>
-    </>
-  )
+    <Router>
+      <div className="min-h-screen">
+        <Header />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/prices" element={<Prices />} />
+        </Routes>
+      </div>
+    </Router>
+  );
 }
 
-export default App
+export default App;
