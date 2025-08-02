@@ -13,10 +13,10 @@ const Register = () => {
             <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-20 flex items-center justify-center'>
 
                 {/* Registration Form */}
-                <div className="w-full md:w-1/2 flex items-center justify-center ">
+                <div className="w-full md:w-1/2 flex items-center justify-center md:mb-10">
                     <Card className="w-full max-w-7xl shadow-lg bg-[#E4F4FC]/80">
                         <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
-                            <div className="flex items-center justify-center mb-2 md:mb-4 ">
+                            <div className="flex items-center justify-center mb-2 md:mb-4 mt-10 md:mt-0">
                                 <img
                                     src="/user.jpg"
                                     alt="Login Visual"

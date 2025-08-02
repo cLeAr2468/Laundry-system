@@ -10,23 +10,22 @@ const Home = () => {
                 backgroundImage: "url('/laundry-logo.jpg')",
             }}
         >
-            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-20'>
-                <div className='flex flex-col md:flex-row items-center justify-center px-4 md:px-60 min-h-[500px] gap-6 md:gap-0'>
+             <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-20'>
+                <div className='container mx-auto flex flex-col md:flex-row items-center justify-evenly min-h-[500px] gap-4 md:gap-0 mx-auto px-4 md:px-[15%]'>
                     {/* Left Side - Image */}
-                    <div className="w-full md:w-1/2 flex justify-center hidden md:block">
+                    <div className="hidden md:block">
                         <img
                             src="/laundry-logo.jpg"
                             alt="Login Visual"
-                            className="w-[200px] md:w-[260px] h-[240px] md:h-[300px] rounded-[20%]"
+                            className="w-[200px] md:w-[250px] h-[240px] md:h-[300px] rounded-[20%]"
                             style={{
                                 boxShadow: "12px 0 20px -2px rgba(0, 0, 0, 0.6"
                             }}
                         />
                     </div>
 
-                    {/* Right Side - Login Form */}
-                    <div className="w-full md:w-1/2 flex items-center justify-center p-2 md:p-4">
-                        <Card className="w-full max-w-md shadow-lg bg-[#E4F4FC]/80">
+                   <div className="w-full md:w-[440px]">
+                        <Card className="w-full shadow-lg bg-[#E4F4FC]/80">
                             <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
                                 <div className="flex items-center justify-center mb-2 md:mb-4 ">
                                     <img
