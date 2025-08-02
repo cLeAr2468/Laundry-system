@@ -10,10 +10,10 @@ const Register = () => {
                 backgroundImage: "url('/laundry-logo.jpg')",
             }}
         >
-            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-20 flex items-center justify-center'>
+            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-[5.5%] flex items-center justify-center'>
 
                 {/* Registration Form */}
-                <div className="w-full md:w-1/2 flex items-center justify-center md:mb-10">
+                <div className="w-full md:w-1/2 flex items-center justify-center">
                     <Card className="w-full max-w-7xl shadow-lg bg-[#E4F4FC]/80">
                         <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
                             <div className="flex items-center justify-center mb-2 md:mb-4 mt-10 md:mt-0">
@@ -109,8 +109,6 @@ const Register = () => {
                                     />
                                 </div>
                             </div>
-
-                            
                             <Button className="w-full mt-2 md:mt-4 bg-[#126280] hover:bg-[#126280]/10 h-10 md:h-12 text-sm md:text-base">
                                 Register
                             </Button>
