@@ -1,26 +1,40 @@
-// App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/layout/header';
 import Home from './components/layout/home';
 import About from './components/layout/about';
 import Services from './components/layout/services';
 import Prices from './components/layout/prices';
 import Register from './components/layout/register';
+import Login from './components/layout/Login';
+import Dashboard from './components/layout/dashboard';
+
+function AppContent() {
+  const location = useLocation();
+
+  // Add more routes here if needed
+  const hideHeaderRoutes = ['/dashboard', '/register', '/login'];
+
+  return (
+    <div className="min-h-screen">
+      {!hideHeaderRoutes.includes(location.pathname) && <Header />}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/prices" element={<Prices />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </div>
+  );
+}
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen">
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/prices" element={<Prices />} />
-          <Route path="/register" element={<Register />} />
-        </Routes>
-      </div>
+      <AppContent />
     </Router>
   );
 }
