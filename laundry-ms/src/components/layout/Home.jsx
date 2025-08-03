@@ -1,6 +1,4 @@
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 const Home = () => {
@@ -8,69 +6,97 @@ const Home = () => {
         <div className="min-h-screen bg-cover bg-center"
             style={{
                 backgroundImage: "url('/laundry-logo.jpg')",
+                backgroundSize: 'contain',
+                backgroundRepeat: 'repeat'
             }}
         >
-             <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-20'>
-                <div className='container mx-auto flex flex-col md:flex-row items-center justify-evenly min-h-[500px] gap-4 md:gap-0 mx-auto px-4 md:px-[15%]'>
-                    {/* Left Side - Image */}
-                    <div className="hidden md:block">
-                        <img
-                            src="/laundry-logo.jpg"
-                            alt="Login Visual"
-                            className="w-[200px] md:w-[250px] h-[240px] md:h-[300px] rounded-[20%]"
-                            style={{
-                                boxShadow: "12px 0 20px -2px rgba(0, 0, 0, 0.6"
-                            }}
+            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen'>
+                {/* Hero Section */}
+                <div className="container mx-auto pt-20 px-4">
+                    <div className="text-center mb-16">
+                        <h1 className="text-4xl md:text-5xl font-bold text-[#126280] mb-4">
+                            Welcome to Wash Wise Intelligence
+                        </h1>
+                        <p className="text-xl text-gray-700 mb-8">
+                            Professional Laundry & Dry Cleaning Services
+                        </p>
+                        <Button className="bg-[#126280] text-white px-8 py-6 text-lg hover:bg-[#126280]/90">
+                            Book Now
+                        </Button>
+                    </div>
+
+                    {/* Services Section */}
+                    <div className="grid md:grid-cols-3 gap-8 mb-16">
+                        <ServiceCard
+                            title="Wash & Fold"
+                            description="Professional washing and folding service with premium care for your garments"
+                            price="₱140/load"
+                        />
+                        <ServiceCard
+                            title="Dry Cleaning"
+                            description="Expert dry cleaning for your delicate and special garments"
+                            price="₱180/item"
+                        />
+                        <ServiceCard
+                            title="Express Service"
+                            description="Same-day service for urgent laundry needs"
+                            price="₱200/load"
                         />
                     </div>
 
-                   <div className="w-full md:w-[440px]">
-                        <Card className="w-full shadow-lg bg-[#E4F4FC]/80">
-                            <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
-                                <div className="flex items-center justify-center mb-2 md:mb-4 ">
-                                    <img
-                                        src="/user.jpg"
-                                        alt="Login Visual"
-                                        className="w-[70px] md:w-[90px] h-[70px] md:h-[90px] rounded-[100%]"
-                                    />
-                                </div>
+                    {/* Features Section */}
+                    <div className="bg-white/80 rounded-xl p-8 mb-16">
+                        <h2 className="text-3xl font-bold text-[#126280] text-center mb-8">
+                            Why Choose Us?
+                        </h2>
+                        <div className="grid md:grid-cols-4 gap-6 text-center">
+                            <FeatureItem
+                                title="Quality Service"
+                                description="Premium cleaning solutions"
+                            />
+                            <FeatureItem
+                                title="Fast Turnaround"
+                                description="24-hour service available"
+                            />
+                            <FeatureItem
+                                title="Affordable Rates"
+                                description="Competitive pricing"
+                            />
+                            <FeatureItem
+                                title="Expert Staff"
+                                description="Professional handling"
+                            />
+                        </div>
+                    </div>
 
-                                <h2 className="text-xl md:text-2xl font-bold text-center">Login</h2>
-                                <div className="space-y-2">
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="Username/Email"
-                                        className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-10 md:h-12"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Input
-                                        id="password"
-                                        type="password"
-                                        placeholder="Password"
-                                        className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base h-10 md:h-12"
-                                    />
-                                </div>
-                                <p className="text-sm md:text-md text-gray-600 mt-2 md:mt-4 text-right font-semibold">
-                                    <a href="/Forgotpassword" className="text-blue-600 hover:underline">
-                                        Forgot password
-                                    </a>
-                                </p>
-
-                                <Button className="w-full mt-2 md:mt-4 bg-[#126280] hover:bg-[#126280]/10 h-10 md:h-12 text-sm md:text-base">
-                                    Login
-                                </Button>
-                                <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
-                                    Don't have an account? <a href="/register" className="text-blue-600 font-semibold hover:underline">Register</a>
-                                </p>
-                            </CardContent>
-                        </Card>
+                    {/* Contact Section */}
+                    <div className="text-center pb-8">
+                        <h2 className="text-2xl font-bold text-[#126280] mb-4">
+                            Visit Us Today
+                        </h2>
+                        <p className="text-gray-700 mb-2">123 Laundry Street, Your City</p>
+                        <p className="text-gray-700 mb-2">Phone: (123) 456-7890</p>
+                        <p className="text-gray-700">Open Hours: Mon-Sun 7:00 AM - 9:00 PM</p>
                     </div>
                 </div>
             </div>
         </div>
     );
 };
+
+const ServiceCard = ({ title, description, price }) => (
+    <div className="bg-white/80 p-6 rounded-xl shadow-lg transform hover:scale-105 transition-transform">
+        <h3 className="text-xl font-bold text-[#126280] mb-3">{title}</h3>
+        <p className="text-gray-600 mb-4">{description}</p>
+        <p className="text-2xl font-bold text-[#126280]">{price}</p>
+    </div>
+);
+
+const FeatureItem = ({ title, description }) => (
+    <div>
+        <h3 className="font-semibold text-lg mb-2">{title}</h3>
+        <p className="text-gray-600">{description}</p>
+    </div>
+);
 
 export default Home;

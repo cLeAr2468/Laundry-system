@@ -10,20 +10,20 @@ const Register = () => {
                 backgroundImage: "url('/laundry-logo.jpg')",
             }}
         >
-            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-[5.5%] flex items-center justify-center'>
+            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen md:pt-5 flex items-center justify-center'>
 
                 {/* Registration Form */}
                 <div className="w-full md:w-1/2 flex items-center justify-center">
                     <Card className="w-full max-w-7xl shadow-lg bg-[#E4F4FC]/80">
                         <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
-                            <div className="flex items-center justify-center mb-2 md:mb-4 mt-10 md:mt-0">
+                            <div className="flex items-center justify-center mb-2 md:mb-4 mt-5 md:mt-0">
                                 <img
                                     src="/user.jpg"
                                     alt="Login Visual"
                                     className="w-[70px] md:w-[90px] h-[70px] md:h-[90px] rounded-[100%]"
                                 />
                             </div>
-                            <h2 className="text-xl md:text-2xl font-bold text-center">Register</h2>
+                            <h2 className="text-xl md:text-2xl font-bold text-center">Admin Register Account</h2>
 
                             <div className='flex flex-col md:flex-row items-center justify-center gap-2'>
                                 <div className="space-y-2 flex-1 w-full">
@@ -113,7 +113,7 @@ const Register = () => {
                                 Register
                             </Button>
                             <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
-                                Already have an account? <a href="/" className="text-blue-600 font-semibold hover:underline">Login here</a>
+                                <a href="/dashboard" className="text-blue-600 font-semibold hover:underline text-lg">Back</a>
                             </p>
                         </CardContent>
                     </Card>
