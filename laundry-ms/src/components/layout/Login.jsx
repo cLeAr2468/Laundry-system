@@ -10,18 +10,38 @@ const Login = () => {
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
-        e.preventDefault();
-        
-        // Super admin credentials check
-        if (username === "admin" && password === "admin") {
-            // Navigate to dashboard
+    const handleLogin = async (e) => {
+    e.preventDefault();
+    setError(""); 
+
+    try {
+        const response = await fetch('http://localhost:3000/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'include',
+            mode: 'cors',
+            body: JSON.stringify({ 
+                email: username, 
+                password 
+            })
+        });
+
+        const data = await response.json();
+        console.log('Login response:', data);
+
+        if (response.ok) {
             navigate("/dashboard");
         } else {
-            setError("Invalid credentials");
-            setTimeout(() => setError(""), 3000); // Clear error after 3 seconds
+            setError(data.message || "Login failed. Please try again.");
         }
-    };
+    } catch (error) {
+        console.error("Login error:", error);
+        setError("Connection error. Please check if the server is running.");
+    }
+};
 
     return (
         <div className="min-h-screen bg-cover bg-center"
@@ -32,7 +52,7 @@ const Login = () => {
             }}
         >
             <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-20'>
-                <div className='container mx-auto flex flex-col md:flex-row items-center justify-evenly min-h-[500px] gap-4 md:gap-0 mx-auto px-4 md:px-[15%]'>
+                <div className='container flex flex-col md:flex-row items-center justify-evenly min-h-[500px] gap-4 md:gap-0 mx-auto px-4 md:px-[15%]'>
                     {/* Left Side - Image */}
                     <div className="hidden md:block">
                         <img
