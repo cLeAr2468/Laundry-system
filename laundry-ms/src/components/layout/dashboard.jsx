@@ -47,9 +47,11 @@ const Dashboard = () => {
                                                 ADMIN
                                             </DropdownMenuItem>
                                         </Link>
-                                        <DropdownMenuItem onClick={() => console.log("Laundry Shop clicked")}>
-                                            LAUNDRY SHOP
-                                        </DropdownMenuItem>
+                                        <Link to="/registerLS" className="w-full">
+                                            <DropdownMenuItem onClick={() => console.log("Laundry Shop clicked")}>
+                                                LAUNDRY SHOP
+                                            </DropdownMenuItem>
+                                        </Link>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
