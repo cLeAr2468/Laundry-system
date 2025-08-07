@@ -57,7 +57,7 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <p className="md:text-[24px] text-[#292265] hover:text-[#292265]/90 hover:underline">
-                            <a href="">View Registered Laundry</a>
+                            <a href="/laundry-table">View Registered Laundry</a>
                         </p>
                     </div>
 

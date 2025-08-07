@@ -9,12 +9,13 @@ import Register from './components/layout/register';
 import Login from './components/layout/Login';
 import Dashboard from './components/layout/dashboard';
 import RegisterLS from './components/layout/registerLS';
+import LaundryTable from './components/layout/LaundryTable';
 
 function AppContent() {
   const location = useLocation();
 
   // Add more routes here if needed
-  const hideHeaderRoutes = ['/dashboard', '/register', '/login', '/registerLS'];
+  const hideHeaderRoutes = ['/dashboard', '/register', '/login', '/registerLS', '/laundry-table'];
 
   return (
     <div className="min-h-screen">
@@ -28,6 +29,7 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/registerLS" element={<RegisterLS />} />
+        <Route path="/laundry-table" element={<LaundryTable />} />
       </Routes>
     </div>
   );
