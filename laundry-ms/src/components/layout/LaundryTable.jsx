@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Pencil, Power } from "lucide-react";
 import {
@@ -12,6 +12,46 @@ import {
 import { Link } from 'react-router-dom';
 
 const LaundryTable = () => {
+    const [laundryShops, setLaundryShops] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchLaundryShops = async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/laundry-shops');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch laundry shops');
+                }
+                const result = await response.json();
+                console.log('API Response:', result);
+
+                const shops = result.data || [];
+                
+
+                const transformedShops = shops.map(shop => ({
+                    id: shop.owner_id,
+                    ownerName: `${shop.owner_fName} ${shop.owner_mName} ${shop.owner_lName}`,
+                    contactNumber: shop.owner_contactNum,
+                    address: shop.shop_address,
+                    laundryName: shop.shop_name || 'N/A',
+                    laundryType: shop.shop_type || 'N/A'
+                }));
+
+                console.log('Transformed shops:', transformedShops);
+                setLaundryShops(transformedShops);
+            } catch (err) {
+                console.error('Fetch error:', err);
+                setError(err.message);
+                setLaundryShops([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLaundryShops();
+    }, []);
+
     return (
         <div
             className="min-h-screen bg-cover bg-center"
@@ -54,34 +94,58 @@ const LaundryTable = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow className="bg-white text-center text-sm hover:bg-white">
-                                <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">1</TableCell>
-                                <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">SELENA GOMEZ BIEBER</TableCell>
-                                <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">09468345351</TableCell>
-                                <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
-                                    ERENAS<br />SAN JORGE SAMAR
-                                </TableCell>
-                                <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">LAUNDRYSHOP</TableCell>
-                                <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
-                                    WASHING<br />DRY CLEAN
-                                </TableCell>
-                                <TableCell className="hover:bg-white">
-                                    <div className="flex items-center justify-center gap-4">
-                                        <button
-                                            className="p-2 hover:bg-gray-100 rounded-full text-[#41748f]"
-                                            title="Edit"
-                                        >
-                                            <Pencil size={20} />
-                                        </button>
-                                        <button
-                                            className="p-2 hover:bg-gray-100 rounded-full text-[#41748f]"
-                                            title="Deactivate"
-                                        >
-                                            <Power size={20} />
-                                        </button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center">Loading...</TableCell>
+                                </TableRow>
+                            ) : error ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center text-red-500">{error}</TableCell>
+                                </TableRow>
+                            ) : laundryShops.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center">No laundry shops found</TableCell>
+                                </TableRow>
+                            ) : (
+                                laundryShops.map((shop, index) => (
+                                    <TableRow key={shop.id} className="bg-white text-center text-sm hover:bg-white">
+                                        <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
+                                            {shop.id}
+                                        </TableCell>
+                                        <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
+                                            {shop.ownerName}
+                                        </TableCell>
+                                        <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
+                                            {shop.contactNumber}
+                                        </TableCell>
+                                        <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
+                                            {shop.address}
+                                        </TableCell>
+                                        <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
+                                            {shop.laundryName}
+                                        </TableCell>
+                                        <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
+                                            {shop.laundryType}
+                                        </TableCell>
+                                        <TableCell className="hover:bg-white">
+                                            <div className="flex items-center justify-center gap-4">
+                                                <button
+                                                    className="p-2 hover:bg-gray-100 rounded-full text-[#41748f]"
+                                                    title="Edit"
+                                                >
+                                                    <Pencil size={20} />
+                                                </button>
+                                                <button
+                                                    className="p-2 hover:bg-gray-100 rounded-full text-[#41748f]"
+                                                    title="Deactivate"
+                                                >
+                                                    <Power size={20} />
+                                                </button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </div>
