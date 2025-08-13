@@ -45,15 +45,35 @@ const RegisterLS = () => {
         setError("");
 
         try {
-            const response = await fetch('http://localhost:3000/api/laundry/register', {
+            // Transform the data to match server expectations
+            const transformedData = {
+                owner_fName: formData.firstName,
+                owner_mName: formData.middleName,
+                owner_lName: formData.lastName,
+                owner_emailAdd: formData.email,
+                owner_contactNum: formData.contact,
+                shop_address: formData.address,
+                shop_name: formData.laundryShopName,
+                shop_type: Object.entries(formData.services)
+                    .filter(([_, value]) => value)
+                    .map(([key]) => key)
+                    .join(', ')
+            };
+
+            console.log('Sending transformed data:', transformedData);
+
+            const response = await fetch('http://localhost:3000/api/public/register-laundry-shop', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(transformedData)
             });
 
+            console.log('Response status:', response.status);
+            
             const data = await response.json();
+            console.log('Response data:', data);
 
             if (response.ok) {
                 navigate("/dashboard");
@@ -62,7 +82,7 @@ const RegisterLS = () => {
             }
         } catch (error) {
             console.error("Registration error:", error);
-            setError("Connection error. Please try again later.");
+            setError("Registration failed. Please try again later.");
         }
     };
 

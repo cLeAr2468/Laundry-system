@@ -19,16 +19,27 @@ const LaundryTable = () => {
     useEffect(() => {
         const fetchLaundryShops = async () => {
             try {
-                const response = await fetch('http://localhost:3000/api/auth/laundry-shops');
+                const response = await fetch('http://localhost:3000/api/auth/laundry-shops', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include', // This will send the cookies with the request
+                    mode: 'cors'
+                });
+
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Please login to access this resource');
+                    }
                     throw new Error('Failed to fetch laundry shops');
                 }
+
                 const result = await response.json();
                 console.log('API Response:', result);
 
                 const shops = result.data || [];
-                
-
                 const transformedShops = shops.map(shop => ({
                     id: shop.owner_id,
                     ownerName: `${shop.owner_fName} ${shop.owner_mName} ${shop.owner_lName}`,
