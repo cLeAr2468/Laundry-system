@@ -36,7 +36,7 @@ const LaundryTable = () => {
                     address: shop.shop_address,
                     laundryName: shop.shop_name || 'N/A',
                     laundryType: shop.shop_type || 'N/A',
-                    status: shop.status
+                    status: 'active'
                 }));
 
                 console.log('Transformed shops:', transformedShops);
