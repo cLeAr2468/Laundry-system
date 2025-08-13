@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 
 const UserTable = () => {
   // Sample data array
-  const accounts = [
+  const [accounts, setAccounts] = useState([
     {
       id: 1,
       name: "John Doe",
@@ -61,7 +61,62 @@ const UserTable = () => {
       role: "user",
       status: "pending",
     }
-  ];
+  ]);
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    username: "",
+    contact: "",
+    role: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRoleChange = (value) => {
+    setFormData((prev) => ({ ...prev, role: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    const nextId = accounts.length
+      ? Math.max(...accounts.map((account) => account.id)) + 1
+      : 1;
+
+    const newAccount = {
+      id: nextId,
+      name: formData.name,
+      email: formData.email,
+      username: formData.username,
+      contact: formData.contact,
+      role: formData.role || "user",
+      status: "active",
+    };
+
+    setAccounts((prev) => [...prev, newAccount]);
+
+    setFormData({
+      name: "",
+      email: "",
+      username: "",
+      contact: "",
+      role: "",
+      password: "",
+      confirmPassword: "",
+    });
+    setIsDialogOpen(false);
+  };
 
   const getRoleBadgeColor = (role) => {
     switch (role.toLowerCase()) {
@@ -94,8 +149,6 @@ const UserTable = () => {
       className="min-h-screen bg-cover bg-center"
       style={{
         backgroundImage: "url('/laundry-logo.jpg')",
-        backgroundSize: 'contain',
-        backgroundRepeat: 'repeat'
       }}
     >
       <div className="bg-[#A4DCF4] bg-opacity-80 min-h-screen">
@@ -124,11 +177,6 @@ const UserTable = () => {
               <Search className="h-4 w-4 text-white" />
             </Button>
           </div>
-          <Link to="/register" className="w-full md:w-auto">
-            <Button className="w-full md:w-auto bg-[#126280] hover:bg-[#126280]/80">
-              Add New Account
-            </Button>
-          </Link>
         </div>
 
         {/* Table Section */}
@@ -148,9 +196,9 @@ const UserTable = () => {
               </TableHeader>
               <TableBody>
                 {accounts.map((account) => (
-                  <TableRow 
-                    key={account.id} 
-                    className="bg-white hover:bg-gray-50 transition-colors"
+                  <TableRow
+                    key={account.id}
+                    className="bg-white transition-colors"
                   >
                     <TableCell className="font-medium">{account.name}</TableCell>
                     <TableCell>{account.email}</TableCell>
