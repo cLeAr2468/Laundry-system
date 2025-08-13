@@ -45,7 +45,7 @@ const RegisterLS = () => {
         setError("");
 
         try {
-            const response = await fetch('http://localhost:3000/api/laundry/register', {
+            const response = await fetch('http://localhost:3000/api/auth/register-laundry-shop', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
