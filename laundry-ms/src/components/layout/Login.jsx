@@ -115,7 +115,7 @@ const Login = () => {
 
                                     <Button 
                                         type="submit"
-                                        className="w-full mt-2 md:mt-4 bg-[#126280] hover:bg-[#126280]/10 h-10 md:h-12 text-sm md:text-base text-white"
+                                        className="w-full mt-2 md:mt-4 bg-[#126280] hover:bg-[#126280]/80 h-10 md:h-12 text-sm md:text-base text-white"
                                     >
                                         Login
                                     </Button>

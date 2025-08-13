@@ -44,37 +44,14 @@ const RegisterLS = () => {
     e.preventDefault();
     setError("");
 
-    try {
-      // Transform the data to match server expectations
-      const transformedData = {
-        owner_fName: formData.firstName,
-        owner_mName: formData.middleName,
-        owner_lName: formData.lastName,
-        owner_emailAdd: formData.email,
-        owner_contactNum: formData.contact,
-        shop_address: formData.address,
-        shop_name: formData.laundryShopName,
-        shop_type: Object.entries(formData.services)
-          .filter(([_, value]) => value)
-          .map(([key]) => key)
-          .join(", "),
-      };
-
-      console.log("Sending transformed data:", transformedData);
-
-      // Using the updated public endpoint that matches your backend changes
-      const response = await fetch(
-        "http://localhost:3000/api/public/register-laundry-shop",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(transformedData),
-        }
-      );
-
-      console.log("Response status:", response.status);
+        try {
+            const response = await fetch('http://localhost:3000/api/laundry/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
 
       const data = await response.json();
       console.log("Response data:", data);

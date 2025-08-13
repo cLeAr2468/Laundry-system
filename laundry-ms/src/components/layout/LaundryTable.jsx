@@ -101,6 +101,7 @@ const LaundryTable = () => {
                                 <TableHead className="text-white hover:bg-[#31748f] border-r border-gray-300 last:border-r-0">Address</TableHead>
                                 <TableHead className="text-white hover:bg-[#31748f] border-r border-gray-300 last:border-r-0">Laundry Name</TableHead>
                                 <TableHead className="text-white hover:bg-[#31748f] border-r border-gray-300 last:border-r-0">Type of Laundry</TableHead>
+                                <TableHead className="text-white hover:bg-[#31748f] border-r border-gray-300 last:border-r-0">Status</TableHead>
                                 <TableHead className="text-white hover:bg-[#31748f] border-r border-gray-300 last:border-r-0">Action on Rows</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -137,6 +138,9 @@ const LaundryTable = () => {
                                         </TableCell>
                                         <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
                                             {shop.laundryType}
+                                        </TableCell>
+                                        <TableCell className="hover:bg-white border-r border-gray-300 last:border-r-0">
+                                            {shop.status}
                                         </TableCell>
                                         <TableCell className="hover:bg-white">
                                             <div className="flex items-center justify-center gap-4">
