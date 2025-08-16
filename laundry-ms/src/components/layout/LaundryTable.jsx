@@ -9,14 +9,15 @@ import {
     TableBody,
     TableCell,
 } from "@/components/ui/table";
-import { Link } from "react-router-dom";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
+import { Link } from 'react-router-dom';
+import { format } from "date-fns";
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
     DialogDescription,
-    DialogFooter
+    DialogFooter 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,14 +26,11 @@ const LaundryTable = () => {
     const [laundryShops, setLaundryShops] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // For Dialog
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedShop, setSelectedShop] = useState(null);
-
-    // For Type checkboxes
     const [typeWashing, setTypeWashing] = useState(false);
     const [typeDryClean, setTypeDryClean] = useState(false);
+    const today = format(new Date(), "MMMM dd, yyyy");
 
     useEffect(() => {
         const fetchLaundryShops = async () => {
@@ -61,12 +59,12 @@ const LaundryTable = () => {
                 const shops = result.data || [];
                 const transformedShops = shops.map((shop) => ({
                     id: shop.owner_id,
-                    ownerName: `${shop.owner_fName} ${shop.owner_mName} ${shop.owner_lName}`,
+                    ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`,
                     contactNumber: shop.owner_contactNum,
                     address: shop.shop_address,
-                    laundryName: shop.shop_name || "N/A",
-                    laundryType: shop.shop_type || "N/A",
-                    status: shop.status || "Active"
+                    laundryName: shop.shop_name || 'N/A',
+                    laundryType: shop.shop_type || 'N/A',
+                    status: shop.shop_status || 'active',
                 }));
 
                 setLaundryShops(transformedShops);
@@ -115,7 +113,7 @@ const LaundryTable = () => {
                         <ArrowLeft className="cursor-pointer" />
                     </Link>
                     <div className="text-right text-md md:text-lg font-medium">
-                        Date: April 4, 2025
+                        Date: {today}
                     </div>
                 </div>
 
