@@ -10,11 +10,13 @@ import {
     TableCell,
 } from "@/components/ui/table";
 import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
 
 const LaundryTable = () => {
     const [laundryShops, setLaundryShops] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const today = format(new Date(), 'MMMM dd, yyyy');
 
     useEffect(() => {
         const fetchLaundryShops = async () => {
@@ -42,11 +44,12 @@ const LaundryTable = () => {
                 const shops = result.data || [];
                 const transformedShops = shops.map(shop => ({
                     id: shop.owner_id,
-                    ownerName: `${shop.owner_fName} ${shop.owner_mName} ${shop.owner_lName}`,
+                    ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`,
                     contactNumber: shop.owner_contactNum,
                     address: shop.shop_address,
                     laundryName: shop.shop_name || 'N/A',
-                    laundryType: shop.shop_type || 'N/A'
+                    laundryType: shop.shop_type || 'N/A',
+                    status: shop.shop_status || 'active',
                 }));
 
                 console.log('Transformed shops:', transformedShops);
@@ -77,7 +80,7 @@ const LaundryTable = () => {
                         <ArrowLeft className="cursor-pointer" />
                     </Link>
                     <div className="text-right text-md md:text-lg font-medium">
-                        Date: April 4, 2025
+                        Date: {today}
                     </div>
                 </div>
 

@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -15,54 +14,102 @@ import { ArrowLeft, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const UserTable = () => {
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/public/users', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include',
+          mode: 'cors'
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Please  login to access this resource');
+          }
+          throw new Error('Failed to fetch users');
+        }
+
+        const results = await response.json();
+        console.log('API Response:', results);
+        const transformedUsers = results.data.map(user => ({
+          id: user.id,
+          name: `${user.user_lName}, ${user.user_fName} ${user.user_mName}`,
+          email: user.email,
+          username: user.username,
+          contact: user.contactNum,
+          role: user.role || 'user',
+          status: user.status || 'active',
+        }));
+
+        console.log('Transformerd users:', transformedUsers);
+        setUsers(transformedUsers);
+      } catch (error) {
+        console.error('Fetch error:', error);
+        setError(error.message);
+        setUsers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
   // Sample data array
-  const [accounts, setAccounts] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@email.com",
-      username: "johndoe123",
-      contact: "09123456789",
-      role: "admin",
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane.smith@email.com",
-      username: "janesmith",
-      contact: "09187654321",
-      role: "staff",
-      status: "active",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike.j@email.com",
-      username: "mikej",
-      contact: "09198765432",
-      role: "user",
-      status: "inactive",
-    },
-    {
-      id: 4,
-      name: "Sarah Wilson",
-      email: "sarah.w@email.com",
-      username: "sarahw",
-      contact: "09567891234",
-      role: "staff",
-      status: "active",
-    },
-    {
-      id: 5,
-      name: "Alex Brown",
-      email: "alex.b@email.com",
-      username: "alexb",
-      contact: "09234567891",
-      role: "user",
-      status: "pending",
-    }
-  ]);
+  // const [accounts, setAccounts] = useState([
+  //   {
+  //     id: 1,
+  //     name: "John Doe",
+  //     email: "john.doe@email.com",
+  //     username: "johndoe123",
+  //     contact: "09123456789",
+  //     role: "admin",
+  //     status: "active",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Jane Smith",
+  //     email: "jane.smith@email.com",
+  //     username: "janesmith",
+  //     contact: "09187654321",
+  //     role: "staff",
+  //     status: "active",
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "Mike Johnson",
+  //     email: "mike.j@email.com",
+  //     username: "mikej",
+  //     contact: "09198765432",
+  //     role: "user",
+  //     status: "inactive",
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "Sarah Wilson",
+  //     email: "sarah.w@email.com",
+  //     username: "sarahw",
+  //     contact: "09567891234",
+  //     role: "staff",
+  //     status: "active",
+  //   },
+  //   {
+  //     id: 5,
+  //     name: "Alex Brown",
+  //     email: "alex.b@email.com",
+  //     username: "alexb",
+  //     contact: "09234567891",
+  //     role: "user",
+  //     status: "pending",
+  //   }
+  // ]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -196,56 +243,78 @@ const UserTable = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {accounts.map((account) => (
-                  <TableRow
-                    key={account.id}
-                    className="bg-white transition-colors"
-                  >
-                    <TableCell className="font-medium">{account.name}</TableCell>
-                    <TableCell>{account.email}</TableCell>
-                    <TableCell>{account.username}</TableCell>
-                    <TableCell>{account.contact}</TableCell>
-                    <TableCell>
-                      <Badge className={`${getRoleBadgeColor(account.role)} text-white`}>
-                        {account.role.toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={`${getStatusBadgeColor(account.status)} text-white`}>
-                        {account.status.toUpperCase()}
-                      </Badge>
-                    </TableCell>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">Loading...</TableCell>
                   </TableRow>
-                ))}
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-red-500">{error}</TableCell>
+                  </TableRow>
+                ) : users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">No users found</TableCell>
+                  </TableRow>
+                ) : (
+                  users.map((user) => (
+                    <TableRow
+                      key={user.id}
+                      className="bg-white transition-colors"
+                    >
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.username}</TableCell>
+                      <TableCell>{user.contact}</TableCell>
+                      <TableCell>
+                        <Badge className={`${getRoleBadgeColor(user.role)} text-white`}>
+                          {user.role.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`${getStatusBadgeColor(user.status)} text-white`}>
+                          {user.status.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
 
           {/* Mobile Cards */}
           <div className="md:hidden space-y-4">
-            {accounts.map((account) => (
-              <div
-                key={account.id}
-                className="bg-white rounded-lg p-4 shadow-md space-y-3"
-              >
-                <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-[#126280]">{account.name}</h3>
-                  <Badge className={`${getRoleBadgeColor(account.role)} text-white`}>
-                    {account.role.toUpperCase()}
-                  </Badge>
+            {isLoading ? (
+              <div className="text-center p-4">Loading...</div>
+            ) : error ? (
+              <div className="text-center text-red-500 p-4">{error}</div>
+            ) : users.length === 0 ? (
+              <div className="text-center p-4">No users found</div>
+            ) : (
+              users.map((user) => (
+                <div
+                  key={user.id}
+                  className="bg-white rounded-lg p-4 shadow-md space-y-3"
+                >
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-semibold text-[#126280]">{user.name}</h3>
+                    <Badge className={`${getRoleBadgeColor(user.role)} text-white`}>
+                      {user.role.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div className="text-sm space-y-2">
+                    <p><span className="font-medium">Email:</span> {user.email}</p>
+                    <p><span className="font-medium">Username:</span> {user.username}</p>
+                    <p><span className="font-medium">Contact:</span> {user.contact}</p>
+                  </div>
+                  <div className="flex justify-end">
+                    <Badge className={`${getStatusBadgeColor(user.status)} text-white`}>
+                      {user.status.toUpperCase()}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-sm space-y-2">
-                  <p><span className="font-medium">Email:</span> {account.email}</p>
-                  <p><span className="font-medium">Username:</span> {account.username}</p>
-                  <p><span className="font-medium">Contact:</span> {account.contact}</p>
-                </div>
-                <div className="flex justify-end">
-                  <Badge className={`${getStatusBadgeColor(account.status)} text-white`}>
-                    {account.status.toUpperCase()}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
