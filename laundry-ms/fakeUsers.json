@@ -1,0 +1,62 @@
+[
+  {
+    "user_fName": "John",
+    "user_mName": "A.",
+    "user_lName": "Doe",
+    "user_address": "123 Elm Street, Springfield",
+    "username": "john.doe",
+    "contactNum": "555-1234",
+    "email": "john.doe@example.com",
+    "role": "admin",
+    "status": "active",
+    "password": "P@ssw0rd123"
+  },
+  {
+    "user_fName": "Jane",
+    "user_mName": "B.",
+    "user_lName": "Smith",
+    "user_address": "456 Oak Avenue, Rivertown",
+    "username": "jane.smith",
+    "contactNum": "555-5678",
+    "email": "jane.smith@example.com",
+    "role": "user",
+    "status": "active",
+    "password": "MySecret456"
+  },
+  {
+    "user_fName": "Michael",
+    "user_mName": "C.",
+    "user_lName": "Johnson",
+    "user_address": "789 Maple Lane, Lakeview",
+    "username": "michael.johnson",
+    "contactNum": "555-9012",
+    "email": "michael.johnson@example.com",
+    "role": "staff",
+    "status": "inactive",
+    "password": "Passw0rd789"
+  },
+  {
+    "user_fName": "Emily",
+    "user_mName": "D.",
+    "user_lName": "Williams",
+    "user_address": "321 Birch Blvd, Mountainview",
+    "username": "emily.williams",
+    "contactNum": "555-3456",
+    "email": "emily.williams@example.com",
+    "role": "user",
+    "status": "active",
+    "password": "EmilyPass321"
+  },
+  {
+    "user_fName": "David",
+    "user_mName": "E.",
+    "user_lName": "Brown",
+    "user_address": "654 Cedar Road, Foresthill",
+    "username": "david.brown",
+    "contactNum": "555-7890",
+    "email": "david.brown@example.com",
+    "role": "staff",
+    "status": "banned",
+    "password": "Brownie654"
+  }
+]
