@@ -64,7 +64,7 @@ const LaundryTable = () => {
                     address: shop.shop_address,
                     laundryName: shop.shop_name || 'N/A',
                     laundryType: shop.shop_type || 'N/A',
-                    status: shop.shop_status || 'active',
+                    status: shop.shop_status,
                 }));
 
                 setLaundryShops(transformedShops);
@@ -81,22 +81,101 @@ const LaundryTable = () => {
     }, []);
 
     // Handle save changes
-    const handleSaveChanges = (e) => {
+    const handleSaveChanges = async (e) => {
         e.preventDefault();
+        
+        try {
+            // Validate required fields
+            const formFields = {
+                ownerName: e.target.ownerName.value,
+                laundryName: e.target.laundryName.value,
+                contactNumber: e.target.contactNumber.value,
+                address: e.target.address.value
+            };
 
-        const updatedType = [
-            typeWashing ? "Washing" : null,
-            typeDryClean ? "DryClean" : null
-        ].filter(Boolean).join(", ");
+            // Check for empty fields
+            Object.entries(formFields).forEach(([key, value]) => {
+                if (!value.trim()) {
+                    throw new Error(`${key} cannot be empty`);
+                }
+            });
 
-        const updatedData = {
-            ...selectedShop,
-            laundryType: updatedType
-        };
+            // Get services
+            const services = [];
+            if (typeWashing) services.push("Washing");
+            if (typeDryClean) services.push("DryClean");
+            
+            if (services.length === 0) {
+                throw new Error("Please select at least one service type");
+            }
 
-        console.log("Saving changes:", updatedData);
-        // TODO: API call for updating
-        setIsDialogOpen(false);
+            // Split owner name
+            const [lastName, firstAndMiddle] = formFields.ownerName.split(', ');
+            if (!lastName || !firstAndMiddle) {
+                throw new Error("Owner name must be in format: 'LastName, FirstName MiddleName'");
+            }
+
+            const [firstName, middleName] = firstAndMiddle.split(' ');
+            if (!firstName) {
+                throw new Error("First name is required");
+            }
+
+            // Match the backend required fields
+            const updatedData = {
+                owner_fName: firstName,
+                owner_mName: middleName || "",
+                owner_lName: lastName,
+                owner_contactNum: formFields.contactNumber,
+                shop_address: formFields.address,
+                shop_name: formFields.laundryName,
+                shop_status: selectedShop.status || "active", // Add status
+                shop_type: services.join(", ")
+            };
+
+            console.log("Sending update request:", updatedData);
+
+            const response = await fetch(
+                `http://localhost:3000/api/public/edit-shop/${selectedShop.id}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedData)
+                }
+            );
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                throw new Error(responseData.error || `Server error: ${response.status}`);
+            }
+
+            // Update local state with the response data
+            if (responseData.success && responseData.data) {
+                const updatedShop = responseData.data;
+                setLaundryShops(prevShops => 
+                    prevShops.map(shop => 
+                        shop.id === selectedShop.id 
+                            ? {
+                                ...shop,
+                                ownerName: `${updatedShop.owner_lName}, ${updatedShop.owner_fName} ${updatedShop.owner_mName}`.trim(),
+                                laundryName: updatedShop.shop_name,
+                                contactNumber: updatedShop.owner_contactNum,
+                                address: updatedShop.shop_address,
+                                laundryType: updatedShop.shop_type,
+                                status: updatedShop.shop_status
+                            }
+                            : shop
+                    )
+                );
+            }
+
+            setIsDialogOpen(false);
+        } catch (error) {
+            console.error("Update error:", error);
+            alert(error.message);
+        }
     };
 
     return (
@@ -228,6 +307,7 @@ const LaundryTable = () => {
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <label className="text-right">Owner</label>
                                     <Input
+                                        name="ownerName"
                                         defaultValue={selectedShop.ownerName}
                                         className="col-span-3"
                                     />
@@ -235,6 +315,7 @@ const LaundryTable = () => {
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <label className="text-right">Laundry Name</label>
                                     <Input
+                                        name="laundryName"
                                         defaultValue={selectedShop.laundryName}
                                         className="col-span-3"
                                     />
@@ -242,6 +323,7 @@ const LaundryTable = () => {
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <label className="text-right">Contact</label>
                                     <Input
+                                        name="contactNumber"
                                         defaultValue={selectedShop.contactNumber}
                                         className="col-span-3"
                                     />
@@ -249,6 +331,7 @@ const LaundryTable = () => {
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <label className="text-right">Address</label>
                                     <Input
+                                        name="address"
                                         defaultValue={selectedShop.address}
                                         className="col-span-3"
                                     />
