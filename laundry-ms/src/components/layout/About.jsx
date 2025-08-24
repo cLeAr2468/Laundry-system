@@ -5,14 +5,12 @@
 
         const About = () => {
             return (
-                <div className="min-h-screen bg-no-repeat bg-center"
-                    style={{
-                        backgroundImage: "url('/laundry-logo.jpg')",
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'center center'
-                    }}
-                >
+                    <div
+                        className="min-h-screen bg-cover bg-center"
+                        style={{
+                            backgroundImage: "url('./public/laundry-logo.jpg')",
+                        }}
+                    >
                     <div className="bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-20">
                         <section>
                             <div className="flex flex-col md:flex-row justify-center items-center md:items-start gap-10 px-4 md:px-10">
