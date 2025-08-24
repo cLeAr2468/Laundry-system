@@ -5,64 +5,43 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-    const [username, setUsername] = useState();
-    const [password, setPassword] = useState();
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
-        e.preventDefault();
-        setError("");
+    e.preventDefault();
+    setError(""); 
 
-        // Form validation
-        if (!username || !password) {
-            setError("Please enter both username and password");
-            return;
+    try {
+        const response = await fetch('http://localhost:3000/api/public/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'include',
+            mode: 'cors',
+            body: JSON.stringify({ 
+                email: username, 
+                password 
+            })
+        });
+
+        const data = await response.json();
+        console.log('Login response:', data);
+
+        if (response.ok) {
+            navigate("/dashboard");
+        } else {
+            setError(data.message || "Login failed. Please try again.");
         }
-
-        try {
-            console.log('Sending login request:', { username, password });
-
-            const response = await fetch('http://localhost:3000/api/public/admin/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    username: username.trim(),
-                    password: password.trim()
-                })
-            });
-
-            const data = await response.json();
-            console.log('Server response:', data);
-
-            if (!response.ok) {
-                throw new Error(data.message || data.error || 'Login failed');
-            }
-
-            // Check for successful login using message field instead of success
-            if (data.message === 'Admin login successful') {
-                // Store admin data and token
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('admin', JSON.stringify(data.admin));
-                localStorage.setItem('token', data.token);
-                
-                // Add a console log to debug navigation
-                console.log('Redirecting to dashboard...');
-                
-                // Use navigate function for redirection
-                navigate('/dashboard', { replace: true });
-            } else {
-                setError(data.message || 'Invalid credentials');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            setError(error.message || 'Failed to login. Please try again.');
-        }
-    };
+    } catch (error) {
+        console.error("Login error:", error);
+        setError("Connection error. Please check if the server is running.");
+    }
+};
 
     return (
         <div className="min-h-screen bg-cover bg-center"
