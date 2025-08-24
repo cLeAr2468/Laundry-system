@@ -9,7 +9,7 @@ import {
     TableBody,
     TableCell,
 } from "@/components/ui/table";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { format } from "date-fns";
 import { 
     Dialog, 
@@ -31,28 +31,35 @@ const LaundryTable = () => {
     const [typeWashing, setTypeWashing] = useState(false);
     const [typeDryClean, setTypeDryClean] = useState(false);
     const today = format(new Date(), "MMMM dd, yyyy");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchLaundryShops = async () => {
             try {
-                const response = await fetch(
-                    "http://localhost:3000/api/auth/laundry-shops",
-                    {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Accept: "application/json",
-                        },
-                        credentials: "include",
-                        mode: "cors",
-                    }
-                );
+                // Get the token from localStorage
+                const token = localStorage.getItem('token');
+                
+                if (!token) {
+                    throw new Error('No authentication token found');
+                }
+
+                const response = await fetch('http://localhost:3000/api/auth/laundry-shops', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token // Add the token to headers
+                    },
+                    credentials: 'include'
+                });
 
                 if (!response.ok) {
                     if (response.status === 401) {
-                        throw new Error("Please login to access this resource");
+                        // Handle unauthorized access
+                        localStorage.clear(); // Clear stored credentials
+                        navigate('/login'); // Redirect to login
+                        throw new Error('Please login to access this resource');
                     }
-                    throw new Error("Failed to fetch laundry shops");
+                    throw new Error('Failed to fetch laundry shops');
                 }
 
                 const result = await response.json();
@@ -78,7 +85,7 @@ const LaundryTable = () => {
         };
 
         fetchLaundryShops();
-    }, []);
+    }, [navigate]);
 
     // Handle save changes
     const handleSaveChanges = async (e) => {

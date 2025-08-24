@@ -11,29 +11,39 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Search } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const UserTable = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/public/users', {
+        // Get the token from localStorage
+        const token = localStorage.getItem('token');
+            
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await fetch('http://localhost:3000/api/auth/users', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Authorization': token // Add the token
           },
-          credentials: 'include',
-          mode: 'cors'
+          credentials: 'include'
         });
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Please  login to access this resource');
+            // Handle unauthorized access
+            localStorage.clear(); // Clear stored credentials
+            navigate('/login'); // Redirect to login
+            throw new Error('Please login to access this resource');
           }
           throw new Error('Failed to fetch users');
         }
