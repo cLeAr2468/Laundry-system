@@ -7,10 +7,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import images1 from '../../assets/pics.jpg';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 
 const Dashboard = () => {
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        // Simply redirect to login page
+        navigate('/login');
+    };
+
     return (
         <div className="min-h-screen bg-cover bg-center"
             style={{
@@ -20,11 +27,12 @@ const Dashboard = () => {
             <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen'>
 
                 <div className="container mx-auto pt-4 px-4">
-                    <Link to="/login">
-                        <Button className="bg-[#126280] text-white px-8 text-lg hover:bg-[#126280]/90">
-                            Log out
-                        </Button>
-                    </Link>
+                    <Button 
+                        onClick={handleLogout}
+                        className="bg-[#126280] text-white px-8 text-lg hover:bg-[#126280]/90"
+                    >
+                        Log out
+                    </Button>
                     <div className="md:block hidden mt-10 w-full flex justify-center">
                         <img
                             src={images1}
