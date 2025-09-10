@@ -10,10 +10,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Search } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Search, Eye, Pencil } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
-const UserTable = () => {
+const UserTable = ({ embedded = false }) => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,15 +40,21 @@ const UserTable = () => {
 
         const results = await response.json();
         console.log('API Response:', results);
-        const transformedUsers = results.data.map(user => ({
-          id: user.id,
-          name: `${user.user_lName}, ${user.user_fName} ${user.user_mName}`,
-          email: user.email,
-          username: user.username,
-          contact: user.contactNum,
-          role: user.role || 'user',
-          status: user.status || 'active',
-        }));
+        const transformedUsers = results.data.map(user => {
+          const rawDate = user.createdAt || user.created_at || user.registrationDate || user.registeredAt || null;
+          const parsedDate = rawDate ? new Date(rawDate) : null;
+          return {
+            id: user.id,
+            name: `${user.user_lName}, ${user.user_fName} ${user.user_mName}`,
+            email: user.email,
+            username: user.username,
+            contact: user.contactNum,
+            role: user.role || 'user',
+            status: user.status || 'active',
+            dateRegistered: parsedDate && !isNaN(parsedDate) ? parsedDate.toLocaleDateString() : '—',
+            registeredAt: parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : null,
+          };
+        });
 
         console.log('Transformerd users:', transformedUsers);
         setUsers(transformedUsers);
@@ -112,6 +118,7 @@ const UserTable = () => {
   // ]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -192,31 +199,60 @@ const UserTable = () => {
     }
   };
 
-  return (
-    <div
-      className="min-h-screen bg-cover bg-center"
-      style={{
-        backgroundImage: "url('/laundry-logo.jpg')",
-      }}
-    >
-      <div className="bg-[#A4DCF4] bg-opacity-80 min-h-screen">
-        {/* Top Bar */}
-        <div className="flex justify-between items-center px-4 pt-4">
-          <Link to="/dashboard">
-            <ArrowLeft className="cursor-pointer text-[#126280] hover:text-[#126280]/80" />
-          </Link>
-          <div className="text-right text-md md:text-lg font-medium text-[#126280]">
-            User Accounts Management
-          </div>
-        </div>
+  // Filters
+  const [timeRange, setTimeRange] = useState("all"); // all | weekly | monthly | yearly
+  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
 
-        {/* Search and Add Section */}
+  const getTimeThreshold = () => {
+    const now = Date.now();
+    switch (timeRange) {
+      case "weekly":
+        return now - 7 * 24 * 60 * 60 * 1000;
+      case "monthly":
+        return now - 30 * 24 * 60 * 60 * 1000;
+      case "yearly":
+        return now - 365 * 24 * 60 * 60 * 1000;
+      default:
+        return null;
+    }
+  };
+
+  const filteredUsers = users.filter((user) => {
+    // Status filter
+    const statusOk =
+      statusFilter === "all" ? true : (user.status || "").toLowerCase() === statusFilter;
+
+    // Time range filter
+    if (!statusOk) return false;
+    const threshold = getTimeThreshold();
+    if (threshold === null) return true;
+    if (!user.registeredAt) return false;
+    return user.registeredAt >= threshold;
+  });
+
+  return (
+    <div className={embedded ? "" : "min-h-screen bg-cover bg-center"} style={embedded ? {} : { backgroundImage: "url('/laundry-logo.jpg')" }}>
+      <div className={embedded ? "" : "bg-[#A4DCF4] bg-opacity-80 min-h-screen"}>
+        {/* Top Bar */}
+        {!embedded && (
+          <div className="flex justify-between items-center px-4 pt-4">
+            <Link to="/dashboard">
+              <ArrowLeft className="cursor-pointer text-[#126280] hover:text-[#126280]/80" />
+            </Link>
+            <div className="text-right text-md md:text-lg font-medium text-[#126280]">
+              User Accounts Management
+            </div>
+          </div>
+        )}
+
+        {/* Search and Filters Section */}
+
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-4 py-4">
           <div className="flex items-center gap-2 w-full md:w-auto">
             <Input
               type="text"
               placeholder="Search by name or email..."
-              className="w-full md:w-[300px] bg-white rounded-full"
+              className="w-full md:w-[300px] bg-gray-300 rounded-full"
             />
             <Button
               className="bg-[#126280] hover:bg-[#126280]/80 rounded-full p-2"
@@ -225,42 +261,72 @@ const UserTable = () => {
               <Search className="h-4 w-4 text-white" />
             </Button>
           </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="bg-white rounded-full px-4 py-2 text-sm text-[#126280] border border-[#126280]/30 w-full md:w-auto"
+            >
+              <option value="all">All time</option>
+              <option value="weekly">This week</option>
+              <option value="monthly">This month</option>
+              <option value="yearly">This year</option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-white rounded-full px-4 py-2 text-sm text-[#126280] border border-[#126280]/30 w-full md:w-auto"
+            >
+              <option value="all">All status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+                      <Button
+            className="bg-[#126280] hover:bg-[#126280]/80 p-2 md:w-auto"
+            size="icon"
+            onClick={() => navigate('/dashboard/register')}
+          >
+            Add New User
+          </Button>
+          </div>
         </div>
+        
 
         {/* Table Section */}
-        <div className="px-4 pb-6">
+        <div className={embedded ? "p-0" : "px-4 pb-6"}>
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto rounded-lg">
-            <Table>
+            <Table className="[&_tbody_tr:hover]:bg-white">
               <TableHeader>
-                <TableRow className="bg-[#126280]">
+                <TableRow className="bg-[#126280] hover:bg-[#126280]">
                   <TableHead className="text-white font-semibold">Name</TableHead>
                   <TableHead className="text-white font-semibold">Email</TableHead>
                   <TableHead className="text-white font-semibold">Username</TableHead>
                   <TableHead className="text-white font-semibold">Contact</TableHead>
                   <TableHead className="text-white font-semibold">Role</TableHead>
                   <TableHead className="text-white font-semibold">Status</TableHead>
+                  <TableHead className="text-white font-semibold">Date Registered</TableHead>
+                  <TableHead className="text-white font-semibold text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">Loading...</TableCell>
+                    <TableCell colSpan={8} className="text-center">Loading...</TableCell>
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-red-500">{error}</TableCell>
+                    <TableCell colSpan={8} className="text-center text-red-500">{error}</TableCell>
                   </TableRow>
-                ) : users.length === 0 ? (
+                ) : filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">No users found</TableCell>
+                    <TableCell colSpan={8} className="text-center">No users found</TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user) => (
-                    <TableRow
-                      key={user.id}
-                      className="bg-white transition-colors"
-                    >
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id} className="bg-white">
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.username}</TableCell>
@@ -275,6 +341,31 @@ const UserTable = () => {
                           {user.status.toUpperCase()}
                         </Badge>
                       </TableCell>
+                      <TableCell>{user.dateRegistered}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 justify-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-[#126280] hover:text-[#126280]/80"
+                            aria-label="View user"
+                            title="View"
+                            onClick={() => navigate(`/dashboard/users/${user.id}`, { state: { user } })}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-[#126280] hover:text-[#126280]/80"
+                            aria-label="Edit user"
+                            title="Edit"
+                            onClick={() => console.log('Edit user', user.id)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -288,10 +379,10 @@ const UserTable = () => {
               <div className="text-center p-4">Loading...</div>
             ) : error ? (
               <div className="text-center text-red-500 p-4">{error}</div>
-            ) : users.length === 0 ? (
+            ) : filteredUsers.length === 0 ? (
               <div className="text-center p-4">No users found</div>
             ) : (
-              users.map((user) => (
+              filteredUsers.map((user) => (
                 <div
                   key={user.id}
                   className="bg-white rounded-lg p-4 shadow-md space-y-3"
@@ -306,11 +397,34 @@ const UserTable = () => {
                     <p><span className="font-medium">Email:</span> {user.email}</p>
                     <p><span className="font-medium">Username:</span> {user.username}</p>
                     <p><span className="font-medium">Contact:</span> {user.contact}</p>
+                    <p><span className="font-medium">Date Registered:</span> {user.dateRegistered}</p>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex items-center justify-between pt-2">
                     <Badge className={`${getStatusBadgeColor(user.status)} text-white`}>
                       {user.status.toUpperCase()}
                     </Badge>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-[#126280] hover:text-[#126280]/80"
+                        aria-label="View user"
+                        title="View"
+                        onClick={() => navigate(`/dashboard/users/${user.id}`, { state: { user } })}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-[#126280] hover:text-[#126280]/80"
+                        aria-label="Edit user"
+                        title="Edit"
+                        onClick={() => console.log('Edit user', user.id)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))

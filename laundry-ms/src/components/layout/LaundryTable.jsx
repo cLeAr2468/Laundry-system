@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Pencil, Power } from "lucide-react";
+import { ArrowLeft, Pencil, Eye } from "lucide-react";
 import {
     Table,
     TableHeader,
@@ -9,7 +9,7 @@ import {
     TableBody,
     TableCell,
 } from "@/components/ui/table";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { format } from "date-fns";
 import { 
     Dialog, 
@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const LaundryTable = () => {
+const LaundryTable = ({ embedded = false }) => {
     const [laundryShops, setLaundryShops] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -31,6 +31,11 @@ const LaundryTable = () => {
     const [typeWashing, setTypeWashing] = useState(false);
     const [typeDryClean, setTypeDryClean] = useState(false);
     const today = format(new Date(), "MMMM dd, yyyy");
+    const navigate = useNavigate();
+
+    // Filters
+    const [timeRange, setTimeRange] = useState("all"); // all | weekly | monthly | yearly
+    const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
 
     useEffect(() => {
         const fetchLaundryShops = async () => {
@@ -57,15 +62,21 @@ const LaundryTable = () => {
 
                 const result = await response.json();
                 const shops = result.data || [];
-                const transformedShops = shops.map((shop) => ({
-                    id: shop.owner_id,
-                    ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`,
-                    contactNumber: shop.owner_contactNum,
-                    address: shop.shop_address,
-                    laundryName: shop.shop_name || 'N/A',
-                    laundryType: shop.shop_type || 'N/A',
-                    status: shop.shop_status,
-                }));
+                const transformedShops = shops.map((shop) => {
+                    const rawDate = shop.createdAt || shop.created_at || shop.registrationDate || shop.registeredAt || shop.shop_createdAt || null;
+                    const parsedDate = rawDate ? new Date(rawDate) : null;
+                    return {
+                        id: shop.owner_id,
+                        ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`,
+                        contactNumber: shop.owner_contactNum,
+                        address: shop.shop_address,
+                        laundryName: shop.shop_name || 'N/A',
+                        laundryType: shop.shop_type || 'N/A',
+                        status: shop.shop_status,
+                        dateRegistered: parsedDate && !isNaN(parsedDate) ? parsedDate.toLocaleDateString() : '—',
+                        registeredAt: parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : null,
+                    };
+                });
 
                 setLaundryShops(transformedShops);
             } catch (err) {
@@ -79,6 +90,30 @@ const LaundryTable = () => {
 
         fetchLaundryShops();
     }, []);
+
+    // Derived filters
+    const getTimeThreshold = () => {
+        const now = Date.now();
+        switch (timeRange) {
+            case "weekly":
+                return now - 7 * 24 * 60 * 60 * 1000;
+            case "monthly":
+                return now - 30 * 24 * 60 * 60 * 1000;
+            case "yearly":
+                return now - 365 * 24 * 60 * 60 * 1000;
+            default:
+                return null;
+        }
+    };
+
+    const filteredLaundryShops = laundryShops.filter((shop) => {
+        const statusOk = statusFilter === "all" ? true : (shop.status || "").toLowerCase() === statusFilter;
+        if (!statusOk) return false;
+        const threshold = getTimeThreshold();
+        if (threshold === null) return true;
+        if (!shop.registeredAt) return false;
+        return shop.registeredAt >= threshold;
+    });
 
     // Handle save changes
     const handleSaveChanges = async (e) => {
@@ -179,35 +214,62 @@ const LaundryTable = () => {
     };
 
     return (
-        <div
-            className="min-h-screen bg-cover bg-center"
-            style={{
-                backgroundImage: "url('/laundry-logo.jpg')",
-            }}
-        >
-            <div className="bg-[#A4DCF4] bg-opacity-80 min-h-screen">
+        <div className={embedded ? "" : "min-h-screen bg-cover bg-center"} style={embedded ? {} : { backgroundImage: "url('/laundry-logo.jpg')" }}>
+            <div className={embedded ? "" : "bg-[#A4DCF4] bg-opacity-80 min-h-screen"}>
                 {/* Top Bar */}
-                <div className="flex justify-between items-center px-4 pt-4">
-                    <Link to="/dashboard">
-                        <ArrowLeft className="cursor-pointer" />
-                    </Link>
-                    <div className="text-right text-md md:text-lg font-medium">
-                        Date: {today}
+                {!embedded && (
+                    <div className="flex justify-between items-center px-4 pt-4">
+                        <Link to="/dashboard">
+                            <ArrowLeft className="cursor-pointer" />
+                        </Link>
+                        <div className="text-right text-md md:text-lg font-medium">
+                            Date: {today}
+                        </div>
+                    </div>
+                )}
+
+                {/* Search Bar */}
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-4 py-2">
+                    <div className="flex justify-start w-full md:w-auto">
+                        <Input
+                            type="text"
+                            placeholder="Search"
+                            className="w-[250px] md:w-[350px] bg-[#d8cfe5] rounded-full px-6 py-2 placeholder:text-black"
+                        />
+                    </div>
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <select
+                            value={timeRange}
+                            onChange={(e) => setTimeRange(e.target.value)}
+                            className="bg-white rounded-full px-4 py-2 text-sm text-[#126280] border border-[#126280]/30 w-full md:w-auto"
+                        >
+                            <option value="all">All time</option>
+                            <option value="weekly">This week</option>
+                            <option value="monthly">This month</option>
+                            <option value="yearly">This year</option>
+                        </select>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-white rounded-full px-4 py-2 text-sm text-[#126280] border border-[#126280]/30 w-full md:w-auto"
+                        >
+                            <option value="all">All status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                                  <Button
+                                    className="bg-[#126280] hover:bg-[#126280]/80 p-2 md:w-auto"
+                                    size="icon"
+                                    onClick={() => navigate('/dashboard/registerLS')}
+                                  >
+                                    Add Laundry Shop
+                                  </Button>
                     </div>
                 </div>
 
-                {/* Search Bar */}
-                <div className="flex justify-start px-4 py-2">
-                    <Input
-                        type="text"
-                        placeholder="Search"
-                        className="w-[250px] md:w-[350px] bg-[#d8cfe5] rounded-full px-6 py-2 placeholder:text-black"
-                    />
-                </div>
-
                 {/* Table Section */}
-                <div className="overflow-x-auto px-4 pb-6">
-                    <Table className="border-collapse">
+                <div className={embedded ? "overflow-x-auto" : "overflow-x-auto px-4 pb-6"}>
+                    <Table className="border-collapsee">
                         <TableHeader>
                             <TableRow className="bg-[#31748f] text-white text-sm hover:bg-[#31748f]">
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">ID</TableHead>
@@ -217,24 +279,25 @@ const LaundryTable = () => {
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">Laundry Name</TableHead>
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">Type of Laundry</TableHead>
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">Status</TableHead>
-                                <TableHead className="text-white border-r border-gray-300 last:border-r-0">Action on Rows</TableHead>
+                                <TableHead className="text-white border-r border-gray-300 last:border-r-0">Date Registered</TableHead>
+                                <TableHead className="text-white border-r border-gray-300 last:border-r-0">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center">Loading...</TableCell>
+                                    <TableCell colSpan={9} className="text-center">Loading...</TableCell>
                                 </TableRow>
                             ) : error ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center text-red-500">{error}</TableCell>
+                                    <TableCell colSpan={9} className="text-center text-red-500">{error}</TableCell>
                                 </TableRow>
-                            ) : laundryShops.length === 0 ? (
+                            ) : filteredLaundryShops.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center">No laundry shops found</TableCell>
+                                    <TableCell colSpan={9} className="text-center">No laundry shops found</TableCell>
                                 </TableRow>
                             ) : (
-                                laundryShops.map((shop) => (
+                                filteredLaundryShops.map((shop) => (
                                     <TableRow key={shop.id} className="bg-white text-center text-sm hover:bg-white">
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.id}</TableCell>
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.ownerName}</TableCell>
@@ -243,31 +306,29 @@ const LaundryTable = () => {
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.laundryName}</TableCell>
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.laundryType}</TableCell>
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.status}</TableCell>
+                                        <TableCell className="border-r border-gray-300 last:border-r-0">{shop.dateRegistered}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center justify-center gap-4">
                                                 <button
+                                                    className="p-2 hover:bg-gray-100 rounded-full text-[#41748f]"
+                                                    title="View"
+                                                    onClick={() => navigate(`/dashboard/shops/${shop.id}`, { state: { shop } })}
+                                                >
+                                                    <Eye size={20} />
+                                                </button>
+                                                <button
                                                     onClick={() => {
                                                         setSelectedShop(shop);
-                                                        console.log("Original laundry type:", shop.laundryType);
                                                         const types = (shop.laundryType || "").split(",").map(t => t.trim());
-                                                        console.log("Parsed types:", types);
-                                                        
-                                                        // Check for washing (case insensitive)
                                                         const hasWashing = types.some(type => 
                                                             type.toLowerCase() === "washing" || 
                                                             type.toLowerCase() === "wash"
                                                         );
-                                                        
-                                                        // Check for dryclean (case insensitive)
                                                         const hasDryClean = types.some(type => 
                                                             type.toLowerCase() === "dryclean" || 
                                                             type.toLowerCase() === "dry clean" ||
                                                             type.toLowerCase() === "dry-clean"
                                                         );
-                                                        
-                                                        console.log("Has washing:", hasWashing);
-                                                        console.log("Has dryclean:", hasDryClean);
-                                                        
                                                         setTypeWashing(hasWashing);
                                                         setTypeDryClean(hasDryClean);
                                                         setIsDialogOpen(true);
@@ -276,12 +337,6 @@ const LaundryTable = () => {
                                                     title="Edit"
                                                 >
                                                     <Pencil size={20} />
-                                                </button>
-                                                <button
-                                                    className="p-2 hover:bg-gray-100 rounded-full text-[#41748f]"
-                                                    title="Deactivate"
-                                                >
-                                                    <Power size={20} />
                                                 </button>
                                             </div>
                                         </TableCell>

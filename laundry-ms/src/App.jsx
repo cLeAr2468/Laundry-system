@@ -10,7 +10,6 @@ import Login from './components/layout/Login';
 import Dashboard from './components/layout/dashboard';
 import RegisterLS from './components/layout/registerLS';
 import LaundryTable from './components/layout/LaundryTable';
-import UserTable from './components/layout/userTable';
 
 function AppContent() {
   const location = useLocation();
@@ -18,11 +17,16 @@ function AppContent() {
   // Routes that should not display the header
   const hideHeaderRoutes = [
     '/dashboard',
-    '/register',
+    '/dashboard/users',
+    '/dashboard/shops',
+    '/dashboard/register',
     '/login',
-    '/registerLS',
+    '/dashboard/registerLS',
     '/laundryTable',
-    '/userTable'
+    '/userTable',
+    '/about',
+    '/services',
+    '/prices'
   ];
 
   // Check if current path should hide header
@@ -41,10 +45,15 @@ function AppContent() {
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/users" element={<Dashboard showUsers />} />
+        <Route path="/dashboard/users/:id" element={<Dashboard showUserDetails />} />
+        <Route path="/dashboard/register" element={<Dashboard showRegister />} />
+        <Route path="/dashboard/shops" element={<Dashboard showShops />} />
+        <Route path="/dashboard/shops/:id" element={<Dashboard showShopDetails />} />
+        <Route path="/dashboard/registerLS" element={<Dashboard showLaundryRegister />} />
         <Route path="/register" element={<Register />} />
         <Route path="/registerLS" element={<RegisterLS />} />
-        <Route path="/laundryTable" element={<LaundryTable />} />
-        <Route path="/userTable" element={<UserTable />} /> {/* Fixed component name */}
+        <Route path="/laundryTable" element={<LaundryTable />} /> 
       </Routes>
     </div>
   );
