@@ -10,7 +10,6 @@ import Login from './components/layout/Login';
 import Dashboard from './components/layout/dashboard';
 import RegisterLS from './components/layout/registerLS';
 import LaundryTable from './components/layout/LaundryTable';
-import UserTable from './components/layout/userTable';
 
 function AppContent() {
   const location = useLocation();

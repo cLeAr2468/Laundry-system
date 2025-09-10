@@ -1,36 +1,94 @@
-import React from "react";
-import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import images1 from '../../assets/pics.jpg';
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import LaundryStatusChart from './LaundryStatusChart';
+import Sidebar from './Sidebar';
+import { Input } from '../ui/input';
+import UserTable from './userTable';
+import LaundryTable from './LaundryTable';
+import UserDetails from './userDetails';
+import ShopDetails from './shopDetails';
 
+const Dashboard = ({ showUsers = false, showShops = false, showUserDetails = false, showShopDetails = false }) => {
+  return (
+    <div className="flex h-screen bg-transparent">
+      <Sidebar />
 
-const Dashboard = () => {
-    return (
-        <div className="min-h-screen bg-cover bg-center"
-            style={{
-                backgroundImage: "url('/laundry-logo.jpg')",
-            }}
-        >
-            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen'>
+      {/* Main Content */}
+      <div className="flex-1 p-6 overflow-auto bg-transparent relative">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, #126280 2px, transparent 2px)`,
+            backgroundSize: '50px 50px'
+          }} />
+        </div>
+        
+        <div className="space-y-6 relative z-10">
+          {showUsers ? (
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-slate-800">
+                  MANAGE USERS
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UserTable embedded />
+              </CardContent>
+            </Card>
+          ) : showUserDetails ? (
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-slate-800">USER DETAILS</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UserDetails />
+              </CardContent>
+            </Card>
+          ) : showShops ? (
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-slate-800">
+                  MANAGE LAUNDRY SHOPS
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LaundryTable embedded />
+              </CardContent>
+            </Card>
+          ) : showShopDetails ? (
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-slate-800">SHOP DETAILS</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ShopDetails />
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Top Statistics Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Today's Highlight */}
+                <Card className="bg-[#688ce4] shadow-lg border-0">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold text-white">
+                      TODAY'S HIGHLIGHT
+                    </CardTitle>
+                    <Input type="date" className="max-w-[180px] bg-white border-slate-300 text-slate-800" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center">
+                      {/* First Pair */}
+                      <div className="flex items-center gap-2 flex-col">
+                        <span className="text-lg font-semibold text-white">ORDERS:</span>
+                        <span className="text-2xl font-bold text-white">45</span>
+                      </div>
 
-                <div className="container mx-auto pt-4 px-4">
-                    <Link to="/login">
-                        <Button className="bg-[#126280] text-white px-8 text-lg hover:bg-[#126280]/90">
-                            Log out
-                        </Button>
-                    </Link>
-                    <div className="md:block hidden mt-10 w-full flex justify-center">
-                        <img
-                            src={images1}
-                            alt="Laundry Shop"
-                            className="rounded-lg shadow-lg w-full h-[300px] object-cover"
-                        />
+                      {/* Second Pair */}
+                      <div className="flex items-center gap-2 flex-col">
+                        <span className="text-lg font-semibold text-white">ORDER AMOUNT:</span>
+                        <span className="text-2xl font-bold text-white">₱4,080</span>
+                      </div>
                     </div>
                   </CardContent>
 
