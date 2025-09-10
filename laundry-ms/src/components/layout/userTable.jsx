@@ -246,6 +246,7 @@ const UserTable = ({ embedded = false }) => {
         )}
 
         {/* Search and Filters Section */}
+
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-4 py-4">
           <div className="flex items-center gap-2 w-full md:w-auto">
             <Input
@@ -282,8 +283,16 @@ const UserTable = ({ embedded = false }) => {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
+                      <Button
+            className="bg-[#126280] hover:bg-[#126280]/80 p-2 md:w-auto"
+            size="icon"
+            onClick={() => navigate('/dashboard/register')}
+          >
+            Add New User
+          </Button>
           </div>
         </div>
+        
 
         {/* Table Section */}
         <div className={embedded ? "p-0" : "px-4 pb-6"}>

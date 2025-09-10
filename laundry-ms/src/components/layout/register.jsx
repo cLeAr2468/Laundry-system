@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
-const Register = () => {
+const Register = ({ embedded = false }) => {
     const navigate = useNavigate();
     const [error, setError] = useState("");
     const [formData, setFormData] = useState({
@@ -69,28 +69,28 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen bg-cover bg-center"
-            style={{
+        <div className={embedded ? "w-full" : "min-h-screen bg-cover bg-center"}
+            style={embedded ? {} : {
                 backgroundImage: "url('/laundry-logo.jpg')",
             }}
         >
-            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen md:pt-5 flex items-center justify-center'>
+            <div className={embedded ? "w-full" : 'bg-[#A4DCF4] bg-opacity-80 min-h-screen md:pt-5 flex items-center justify-center'}>
 
                 {/* Registration Form */}
-                <div className="w-full md:w-1/2 flex items-center justify-center">
-                    <Card className="w-full max-w-7xl shadow-lg bg-[#E4F4FC]/80">
+                <div className={`${embedded ? 'w-full' : 'w-full md:w-1/2'} flex items-center justify-center`}>
+                    <div className={`w-full ${embedded ? '' : 'max-w-7xl'}`}>
                         <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
-                            <div className="flex items-center justify-center mb-2 md:mb-4 mt-5 md:mt-0">
+                            <div className="flex items-center justify-center mb-4">
                                 <img
                                     src="/user.jpg"
-                                    alt="Login Visual"
-                                    className="w-[70px] md:w-[90px] h-[70px] md:h-[90px] rounded-[100%]"
+                                    alt="User Icon"
+                                    className="w-[60px] h-[60px] rounded-full border-4 border-[#126280]/20"
                                 />
                             </div>
-                            <h2 className="text-xl md:text-2xl font-bold text-center">Admin Register Account</h2>
+                            <h2 className="text-xl md:text-2xl font-bold text-[#126280] text-center mb-4">Register New User Account</h2>
 
                             {error && (
-                                <p className="text-red-500 text-sm text-center font-semibold">
+                                <p className="text-red-500 text-sm text-center font-semibold mb-4">
                                     {error}
                                 </p>
                             )}
@@ -106,7 +106,7 @@ const Register = () => {
                                             placeholder="First name"
                                             value={formData.admin_fName}
                                             onChange={handleChange}
-                                            className="w-full bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-10 md:h-12"
+                                            className="w-full bg-gray-300 rounded-full border border-[#126280]/30 focus:outline-none focus:ring-2 focus:ring-[#126280]/50 text-sm md:text-base h-10 md:h-12"
                                             required
                                         />
                                     </div>
@@ -229,17 +229,19 @@ const Register = () => {
 
                                 <Button 
                                     type="submit"
-                                    className="w-full mt-2 md:mt-4 bg-[#126280] hover:bg-[#126280]/80 h-10 md:h-12 text-sm md:text-base text-white"
+                                    className="w-full mt-6 bg-[#126280] hover:bg-[#126280]/80 h-10 md:h-12 text-sm md:text-base text-white rounded-full font-semibold"
                                 >
-                                    Register
-                                </Button>
+                                    Register User
+                                </Button>         
                             </form>
                             
-                            <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
-                                <a href="/dashboard" className="text-blue-600 font-semibold hover:underline text-lg">Back</a>
-                            </p>
+                            {!embedded && (
+                                <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
+                                    <a href="/dashboard" className="text-blue-600 font-semibold hover:underline text-lg">Back</a>
+                                </p>
+                            )}
                         </CardContent>
-                    </Card>
+                    </div>
                 </div>
             </div>
         </div>

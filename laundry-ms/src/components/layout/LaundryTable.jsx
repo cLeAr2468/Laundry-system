@@ -257,6 +257,13 @@ const LaundryTable = ({ embedded = false }) => {
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
+                                  <Button
+                                    className="bg-[#126280] hover:bg-[#126280]/80 p-2 md:w-auto"
+                                    size="icon"
+                                    onClick={() => navigate('/dashboard/registerLS')}
+                                  >
+                                    Add Laundry Shop
+                                  </Button>
                     </div>
                 </div>
 

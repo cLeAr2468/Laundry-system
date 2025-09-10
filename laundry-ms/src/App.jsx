@@ -19,9 +19,9 @@ function AppContent() {
     '/dashboard',
     '/dashboard/users',
     '/dashboard/shops',
-    '/register',
+    '/dashboard/register',
     '/login',
-    '/registerLS',
+    '/dashboard/registerLS',
     '/laundryTable',
     '/userTable',
     '/about',
@@ -47,8 +47,10 @@ function AppContent() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/users" element={<Dashboard showUsers />} />
         <Route path="/dashboard/users/:id" element={<Dashboard showUserDetails />} />
+        <Route path="/dashboard/register" element={<Dashboard showRegister />} />
         <Route path="/dashboard/shops" element={<Dashboard showShops />} />
         <Route path="/dashboard/shops/:id" element={<Dashboard showShopDetails />} />
+        <Route path="/dashboard/registerLS" element={<Dashboard showLaundryRegister />} />
         <Route path="/register" element={<Register />} />
         <Route path="/registerLS" element={<RegisterLS />} />
         <Route path="/laundryTable" element={<LaundryTable />} /> 

@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
+import { ShoppingBasket } from "lucide-react";
 
-const RegisterLS = () => {
+const RegisterLS = ({ embedded = false }) => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
@@ -69,26 +70,22 @@ const RegisterLS = () => {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center"
-      style={{
+      className={embedded ? "w-full" : "min-h-screen bg-cover bg-center"}
+      style={embedded ? {} : {
         backgroundImage: "url('/laundry-logo.jpg')",
         backgroundSize: "contain",
         backgroundRepeat: "repeat",
       }}
     >
-      <div className="bg-[#A4DCF4] bg-opacity-80 min-h-screen md:pt-5 flex items-center justify-center">
-        <div className="w-full md:w-1/2 flex items-center justify-center">
-          <Card className="w-full max-w-7xl shadow-lg bg-[#E4F4FC]/80">
+      <div className={embedded ? "w-full" : "bg-[#A4DCF4] bg-opacity-80 min-h-screen md:pt-5 flex items-center justify-center"}>
+        <div className={`${embedded ? 'w-full' : 'w-full md:w-1/2'} flex items-center justify-center`}>
+          <div className={`w-full ${embedded ? '' : 'max-w-7xl'}`}>
             <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
-              <div className="flex items-center justify-center mb-2 md:mb-4 mt-5 md:mt-0">
-                <img
-                  src="/user.jpg"
-                  alt="Login Visual"
-                  className="w-[70px] md:w-[90px] h-[70px] md:h-[90px] rounded-[100%]"
-                />
+              <div className="flex items-center justify-center mb-4  max-w-2xl mx-auto">
+               <ShoppingBasket />
               </div>
-              <h2 className="text-xl md:text-2xl font-bold text-center">
-                Registration for Laundry
+              <h2 className="text-xl md:text-2xl font-bold text-[#126280] text-center mb-4">
+                Register New Laundry Shop
               </h2>
 
               {error && (
@@ -184,9 +181,9 @@ const RegisterLS = () => {
                     />
                   </div>
                   <div className="space-y-2 w-full">
-                    <div className="bg-gray-300 rounded-2xl p-4">
-                      <p className="text-sm font-medium mb-2">
-                        Type of Laundry
+                    <div className="bg-white rounded-2xl p-4 border border-[#126280]/30">
+                      <p className="text-sm font-medium mb-2 text-[#126280]">
+                        Type of Laundry Services
                       </p>
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
@@ -224,24 +221,26 @@ const RegisterLS = () => {
                   </div>
                 </div>
 
-                <Button
+                <Button 
                   type="submit"
-                  className="w-full mt-6 bg-[#126280] hover:bg-[#126280]/10 h-10 md:h-12 text-sm md:text-base text-white"
+                  className="w-full mt-6 bg-[#126280] hover:bg-[#126280]/80 h-10 md:h-12 text-sm md:text-base text-white rounded-full font-semibold"
                 >
-                  Register
+                  Register Laundry Shop
                 </Button>
               </form>
 
-              <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
-                <a
-                  href="/dashboard"
-                  className="text-blue-600 font-semibold hover:underline text-lg"
-                >
-                  Back
-                </a>
-              </p>
+              {!embedded && (
+                <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
+                  <a
+                    href="/dashboard"
+                    className="text-blue-600 font-semibold hover:underline text-lg"
+                  >
+                    Back
+                  </a>
+                </p>
+              )}
             </CardContent>
-          </Card>
+          </div>
         </div>
       </div>
     </div>

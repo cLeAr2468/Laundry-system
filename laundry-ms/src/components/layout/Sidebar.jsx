@@ -35,7 +35,10 @@ const Sidebar = () => {
         <nav className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            // Check if current path matches item path or is related to the same section
+            const isActive = location.pathname === item.path || 
+              (item.path === '/dashboard/shops' && location.pathname === '/dashboard/registerLS') ||
+              (item.path === '/dashboard/users' && location.pathname === '/dashboard/register');
             return (
               <Button
                 key={item.name}
