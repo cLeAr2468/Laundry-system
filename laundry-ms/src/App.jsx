@@ -18,11 +18,16 @@ function AppContent() {
   // Routes that should not display the header
   const hideHeaderRoutes = [
     '/dashboard',
+    '/dashboard/users',
+    '/dashboard/shops',
     '/register',
     '/login',
     '/registerLS',
     '/laundryTable',
-    '/userTable'
+    '/userTable',
+    '/about',
+    '/services',
+    '/prices'
   ];
 
   // Check if current path should hide header
@@ -41,10 +46,13 @@ function AppContent() {
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/users" element={<Dashboard showUsers />} />
+        <Route path="/dashboard/users/:id" element={<Dashboard showUserDetails />} />
+        <Route path="/dashboard/shops" element={<Dashboard showShops />} />
+        <Route path="/dashboard/shops/:id" element={<Dashboard showShopDetails />} />
         <Route path="/register" element={<Register />} />
         <Route path="/registerLS" element={<RegisterLS />} />
-        <Route path="/laundryTable" element={<LaundryTable />} />
-        <Route path="/userTable" element={<UserTable />} /> {/* Fixed component name */}
+        <Route path="/laundryTable" element={<LaundryTable />} /> 
       </Routes>
     </div>
   );
