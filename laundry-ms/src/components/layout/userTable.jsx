@@ -21,26 +21,36 @@ const UserTable = ({ embedded = false }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/public/users', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          credentials: 'include',
-          mode: 'cors'
-        });
+        const [usersResponse, adminsResponse] = await Promise.all([
+          fetch('http://localhost:3000/api/auth/users', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': localStorage.getItem('token')
+            },
+            credentials: 'include'
+          }),
+          fetch('http://localhost:3000/api/auth/admins', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': localStorage.getItem('token')
+            },
+            credentials: 'include'
+          })
+        ]);
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error('Please  login to access this resource');
-          }
-          throw new Error('Failed to fetch users');
+        if (!usersResponse.ok || !adminsResponse.ok) {
+          throw new Error('Failed to fetch data');
         }
 
-        const results = await response.json();
-        console.log('API Response:', results);
-        const transformedUsers = results.data.map(user => {
+        const [usersResult, adminsResult] = await Promise.all([
+          usersResponse.json(),
+          adminsResponse.json()
+        ]);
+
+        // Transform users
+        const transformedUsers = usersResult.data.map(user => {
           const rawDate = user.createdAt || user.created_at || user.registrationDate || user.registeredAt || null;
           const parsedDate = rawDate ? new Date(rawDate) : null;
           return {
@@ -56,8 +66,26 @@ const UserTable = ({ embedded = false }) => {
           };
         });
 
-        console.log('Transformerd users:', transformedUsers);
-        setUsers(transformedUsers);
+        // Transform admins to match the same format
+        const transformedAdmins = adminsResult.data.map(admin => {
+          const parsedDate = admin.date_registered ? new Date(admin.date_registered) : null;
+          return {
+            id: admin.admin_id,
+            name: `${admin.admin_lName}, ${admin.admin_fName} ${admin.admin_mName}`,
+            email: admin.email,
+            username: admin.admin_username,
+            contact: admin.admin_contactNum,
+            role: admin.role || 'Admin',
+            status: admin.status || 'Active',
+            dateRegistered: parsedDate && !isNaN(parsedDate) ? parsedDate.toLocaleDateString() : '—',
+            registeredAt: parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : null,
+          };
+        });
+
+        // Combine both arrays
+        const combinedUsers = [...transformedUsers, ...transformedAdmins];
+        console.log('Combined users:', combinedUsers);
+        setUsers(combinedUsers);
       } catch (error) {
         console.error('Fetch error:', error);
         setError(error.message);
@@ -66,6 +94,7 @@ const UserTable = ({ embedded = false }) => {
         setIsLoading(false);
       }
     };
+
     fetchUsers();
   }, []);
   // Sample data array
