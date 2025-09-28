@@ -18,10 +18,11 @@ const Sidebar = () => {
 
   const handleNavigation = (path) => {
     if (path === '/logout') {
-      // Handle logout logic
-      console.log('Logout clicked');
+
+      localStorage.clear();
+      navigate('/login');
     } else if (path !== location.pathname) {
-      // Navigate to other pages
+
       navigate(path);
     }
   };
