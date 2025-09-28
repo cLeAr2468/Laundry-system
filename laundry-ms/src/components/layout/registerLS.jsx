@@ -95,6 +95,18 @@ const RegisterLS = ({ embedded = false }) => {
               )}
 
               <form onSubmit={handleSubmit}>
+                <div className="space-y-2 w-full mb-4">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Email address"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-10 md:h-12"
+                    required
+                  />
+                </div>
+
                 <div className="flex flex-col md:flex-row items-center justify-center gap-2">
                   <div className="space-y-2 flex-1 w-full">
                     <Input
@@ -131,12 +143,12 @@ const RegisterLS = ({ embedded = false }) => {
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center justify-center gap-2 mt-4">
-                  <div className="space-y-2 w-full">
+                   <div className="space-y-2 w-full">
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="Email address"
-                      value={formData.email}
+                      id="laundryShopName"
+                      type="text"
+                      placeholder="Laundry Shop Name"
+                      value={formData.laundryShopName}
                       onChange={handleChange}
                       className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-10 md:h-12"
                       required
@@ -170,15 +182,6 @@ const RegisterLS = ({ embedded = false }) => {
 
                 <div className="flex flex-col md:flex-row items-center justify-center gap-2 mt-4">
                   <div className="space-y-2 w-full">
-                    <Input
-                      id="laundryShopName"
-                      type="text"
-                      placeholder="Laundry Shop Name"
-                      value={formData.laundryShopName}
-                      onChange={handleChange}
-                      className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-10 md:h-12"
-                      required
-                    />
                   </div>
                   <div className="space-y-2 w-full">
                     <div className="bg-white rounded-2xl p-4 border border-[#126280]/30">
