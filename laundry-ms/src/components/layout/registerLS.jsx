@@ -45,28 +45,48 @@ const RegisterLS = ({ embedded = false }) => {
     e.preventDefault();
     setError("");
 
-        try {
-            const response = await fetch('http://localhost:3000/api/laundry/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
+    try {
+        // Transform services into string
+        const selectedServices = [];
+        if (formData.services.washing) selectedServices.push("Washing");
+        if (formData.services.dryClean) selectedServices.push("DryClean");
 
-      const data = await response.json();
-      console.log("Response data:", data);
+        // Prepare the data in the format expected by the backend
+        const registrationData = {
+            owner_fName: formData.firstName,
+            owner_mName: formData.middleName,
+            owner_lName: formData.lastName,
+            owner_emailAdd: formData.email,
+            owner_contactNum: formData.contact,
+            shop_address: formData.address,
+            shop_name: formData.laundryShopName,
+            shop_type: selectedServices.join(", "),
+        };
 
-      if (response.ok) {
-        navigate("/dashboard");
-      } else {
-        setError(data.message || "Registration failed");
-      }
+        console.log('Sending registration data:', registrationData);
+
+        const response = await fetch('http://localhost:3000/api/public/register-laundry-shop', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(registrationData)
+        });
+
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (!response.ok) {
+            throw new Error(data.error || data.message || 'Failed to register laundry shop');
+        }
+
+        // Registration successful
+        navigate('/dashboard');
     } catch (error) {
-      console.error("Registration error:", error);
-      setError("Registration failed. Please try again later.");
+        console.error('Registration error:', error);
+        setError(error.message);
     }
-  };
+};
 
   return (
     <div
