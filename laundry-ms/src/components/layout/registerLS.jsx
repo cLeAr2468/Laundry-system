@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { ShoppingBasket } from "lucide-react";
+import { fetchWithApiKey } from '@/lib/api'; 
 
 const RegisterLS = ({ embedded = false }) => {
   const navigate = useNavigate();
@@ -53,19 +54,19 @@ const RegisterLS = ({ embedded = false }) => {
 
         // Prepare the data in the format expected by the backend
         const registrationData = {
-            owner_fName: formData.firstName,
-            owner_mName: formData.middleName,
-            owner_lName: formData.lastName,
-            owner_emailAdd: formData.email,
-            owner_contactNum: formData.contact,
-            shop_address: formData.address,
-            shop_name: formData.laundryShopName,
+            owner_fName: formData.firstName.trim(),
+            owner_mName: formData.middleName.trim(),
+            owner_lName: formData.lastName.trim(),
+            owner_emailAdd: formData.email.trim().toLowerCase(),
+            owner_contactNum: formData.contact.trim(),
+            shop_address: formData.address.trim(),
+            shop_name: formData.laundryShopName.trim(),
             shop_type: selectedServices.join(", "),
         };
 
         console.log('Sending registration data:', registrationData);
 
-        const response = await fetch('http://localhost:3000/api/public/register-laundry-shop', {
+        const response = await fetchWithApiKey('/api/public/register-laundry-shop', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -73,15 +74,11 @@ const RegisterLS = ({ embedded = false }) => {
             body: JSON.stringify(registrationData)
         });
 
-        const data = await response.json();
-        console.log('Response data:', data);
-
-        if (!response.ok) {
-            throw new Error(data.error || data.message || 'Failed to register laundry shop');
-        }
-
-        // Registration successful
-        navigate('/dashboard');
+            if (response.message === "Laundry shop registered successfully") {
+                navigate("/dashboard");
+            } else {
+                setError(response.message || "Registration failed");
+            }
     } catch (error) {
         console.error('Registration error:', error);
         setError(error.message);

@@ -23,10 +23,7 @@ function AppContent() {
     '/login',
     '/dashboard/registerLS',
     '/laundryTable',
-    '/userTable',
-    '/about',
-    '/services',
-    '/prices'
+    '/userTable'
   ];
 
   // Check if current path should hide header

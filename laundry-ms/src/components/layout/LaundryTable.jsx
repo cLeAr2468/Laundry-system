@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { fetchWithApiKey } from '@/lib/api';
 
 const LaundryTable = ({ embedded = false }) => {
     const [laundryShops, setLaundryShops] = useState([]);
@@ -40,62 +41,37 @@ const LaundryTable = ({ embedded = false }) => {
     useEffect(() => {
         const fetchLaundryShops = async () => {
             try {
-                const response = await fetch(
-                    "http://localhost:3000/api/auth/laundry-shops",
-                    {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Accept: "application/json",
-                        },
-                        credentials: "include",
-                        mode: "cors",
-                    }
-                );
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new Error("Please login to access this resource");
-                    }
-                    throw new Error("Failed to fetch laundry shops");
+                setIsLoading(true);
+                const response = await fetchWithApiKey('/api/auth/laundry-shops');
+                
+                if (!response.success || !response.data) {
+                    throw new Error('No data received from server');
                 }
 
-                const result = await response.json();
-                const shops = result.data || [];
-                const transformedShops = shops.map((shop) => {
-                    // Fix date handling to match UserTable
-                    const rawDate = shop.date_registered || shop.createdAt || shop.created_at || null;
-                    const parsedDate = rawDate ? new Date(rawDate) : null;
-                    
-                    return {
-                        id: shop.shop_id,
-                        ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`,
-                        contactNumber: shop.owner_contactNum,
-                        address: shop.shop_address,
-                        laundryName: shop.shop_name || 'N/A',
-                        laundryType: shop.shop_type || 'N/A',
-                        status: shop.shop_status,
-                        dateRegistered: parsedDate && !isNaN(parsedDate) 
-                            ? parsedDate.toLocaleDateString() 
-                            : '—',
-                        registeredAt: parsedDate && !isNaN(parsedDate) 
-                            ? parsedDate.getTime() 
-                            : null,
-                    };
-                });
+                const transformedShops = response.data.map(shop => ({
+                    id: shop.shop_id,
+                    ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`.trim(),
+                    contactNumber: shop.owner_contactNum,
+                    address: shop.shop_address,
+                    laundryName: shop.shop_name || 'N/A',
+                    laundryType: shop.shop_type || 'N/A',
+                    status: shop.shop_status,
+                    dateRegistered: shop.date_registered ? 
+                        new Date(shop.date_registered).toLocaleDateString() : 
+                        '—'
+                }));
 
                 setLaundryShops(transformedShops);
-            } catch (err) {
-                console.error("Fetch error:", err);
-                setError(err.message);
-                setLaundryShops([]);
+            } catch (error) {
+                console.error('Fetch error:', error);
+                setError(error.message);
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchLaundryShops();
-    }, []);
+    }, []); // Remove navigate dependency since we're not using it anymore
 
     // Derived filters
     const getTimeThreshold = () => {
@@ -175,37 +151,27 @@ const LaundryTable = ({ embedded = false }) => {
 
             console.log("Sending update request:", updatedData);
 
-            const response = await fetch(
-                `http://localhost:3000/api/public/edit-shop/${selectedShop.id}`,
+            const response = await fetchWithApiKey(
+                `/api/public/edit-shop/${selectedShop.id}`,
                 {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
                     body: JSON.stringify(updatedData)
                 }
             );
 
-            const responseData = await response.json();
-
-            if (!response.ok) {
-                throw new Error(responseData.error || `Server error: ${response.status}`);
-            }
-
-            // Update local state with the response data
-            if (responseData.success && responseData.data) {
-                const updatedShop = responseData.data;
+            if (response.success && response.data) {
+                // Update local state with the response data
                 setLaundryShops(prevShops => 
                     prevShops.map(shop => 
                         shop.id === selectedShop.id 
                             ? {
                                 ...shop,
-                                ownerName: `${updatedShop.owner_lName}, ${updatedShop.owner_fName} ${updatedShop.owner_mName}`.trim(),
-                                laundryName: updatedShop.shop_name,
-                                contactNumber: updatedShop.owner_contactNum,
-                                address: updatedShop.shop_address,
-                                laundryType: updatedShop.shop_type,
-                                status: updatedShop.shop_status
+                                ownerName: `${response.data.owner_lName}, ${response.data.owner_fName} ${response.data.owner_mName}`.trim(),
+                                laundryName: response.data.shop_name,
+                                contactNumber: response.data.owner_contactNum,
+                                address: response.data.shop_address,
+                                laundryType: response.data.shop_type,
+                                status: response.data.shop_status
                             }
                             : shop
                     )

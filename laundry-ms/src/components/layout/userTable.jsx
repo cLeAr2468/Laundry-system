@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Search, Eye, Pencil } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { fetchWithApiKey } from "@/lib/api";
 
 const UserTable = ({ embedded = false }) => {
   const [users, setUsers] = useState([]);
@@ -22,72 +23,65 @@ const UserTable = ({ embedded = false }) => {
     const fetchUsers = async () => {
       try {
         const [usersResponse, adminsResponse] = await Promise.all([
-          fetch('http://localhost:3000/api/auth/users', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': localStorage.getItem('token')
-            },
-            credentials: 'include'
-          }),
-          fetch('http://localhost:3000/api/auth/admins', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': localStorage.getItem('token')
-            },
-            credentials: 'include'
-          })
+          fetchWithApiKey("/api/auth/users"),
+          fetchWithApiKey("/api/auth/admins"),
         ]);
 
-        if (!usersResponse.ok || !adminsResponse.ok) {
-          throw new Error('Failed to fetch data');
+        // No need to check .ok or call .json() since fetchWithApiKey already handles that
+        if (!usersResponse.success || !adminsResponse.success) {
+          throw new Error("Failed to fetch data");
         }
 
-        const [usersResult, adminsResult] = await Promise.all([
-          usersResponse.json(),
-          adminsResponse.json()
-        ]);
-
         // Transform users
-        const transformedUsers = usersResult.data.map(user => {
-          const rawDate = user.createdAt || user.created_at || user.registrationDate || user.registeredAt || null;
-          const parsedDate = rawDate ? new Date(rawDate) : null;
+        const transformedUsers = usersResponse.data.map((user) => {
+          const parsedDate = user.date_registered
+            ? new Date(user.date_registered)
+            : null;
           return {
-            id: user.id,
+            id: user.user_id,
             name: `${user.user_lName}, ${user.user_fName} ${user.user_mName}`,
             email: user.email,
             username: user.username,
             contact: user.contactNum,
-            role: user.role || 'user',
-            status: user.status || 'active',
-            dateRegistered: parsedDate && !isNaN(parsedDate) ? parsedDate.toLocaleDateString() : '—',
-            registeredAt: parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : null,
+            role: user.role || "user",
+            status: user.status || "active",
+            dateRegistered:
+              parsedDate && !isNaN(parsedDate)
+                ? parsedDate.toLocaleDateString()
+                : "—",
+            registeredAt:
+              parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : null,
           };
         });
 
-        // Transform admins to match the same format
-        const transformedAdmins = adminsResult.data.map(admin => {
-          const parsedDate = admin.date_registered ? new Date(admin.date_registered) : null;
+        // Transform admins
+        const transformedAdmins = adminsResponse.data.map((admin) => {
+          const parsedDate = admin.date_registered
+            ? new Date(admin.date_registered)
+            : null;
           return {
             id: admin.admin_id,
             name: `${admin.admin_lName}, ${admin.admin_fName} ${admin.admin_mName}`,
             email: admin.email,
             username: admin.admin_username,
             contact: admin.admin_contactNum,
-            role: admin.role || 'Admin',
-            status: admin.status || 'Active',
-            dateRegistered: parsedDate && !isNaN(parsedDate) ? parsedDate.toLocaleDateString() : '—',
-            registeredAt: parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : null,
+            role: admin.role || "Admin",
+            status: admin.status || "Active",
+            dateRegistered:
+              parsedDate && !isNaN(parsedDate)
+                ? parsedDate.toLocaleDateString()
+                : "—",
+            registeredAt:
+              parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : null,
           };
         });
 
         // Combine both arrays
         const combinedUsers = [...transformedUsers, ...transformedAdmins];
-        console.log('Combined users:', combinedUsers);
+        console.log("Combined users:", combinedUsers);
         setUsers(combinedUsers);
       } catch (error) {
-        console.error('Fetch error:', error);
+        console.error("Fetch error:", error);
         setError(error.message);
         setUsers([]);
       } finally {
@@ -249,7 +243,9 @@ const UserTable = ({ embedded = false }) => {
   const filteredUsers = users.filter((user) => {
     // Status filter
     const statusOk =
-      statusFilter === "all" ? true : (user.status || "").toLowerCase() === statusFilter;
+      statusFilter === "all"
+        ? true
+        : (user.status || "").toLowerCase() === statusFilter;
 
     // Time range filter
     if (!statusOk) return false;
@@ -260,8 +256,13 @@ const UserTable = ({ embedded = false }) => {
   });
 
   return (
-    <div className={embedded ? "" : "min-h-screen bg-cover bg-center"} style={embedded ? {} : { backgroundImage: "url('/laundry-logo.jpg')" }}>
-      <div className={embedded ? "" : "bg-[#A4DCF4] bg-opacity-80 min-h-screen"}>
+    <div
+      className={embedded ? "" : "min-h-screen bg-cover bg-center"}
+      style={embedded ? {} : { backgroundImage: "url('/laundry-logo.jpg')" }}
+    >
+      <div
+        className={embedded ? "" : "bg-[#A4DCF4] bg-opacity-80 min-h-screen"}
+      >
         {/* Top Bar */}
         {!embedded && (
           <div className="flex justify-between items-center px-4 pt-4">
@@ -312,16 +313,15 @@ const UserTable = ({ embedded = false }) => {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
-                      <Button
-            className="bg-[#126280] hover:bg-[#126280]/80 p-2 md:w-auto"
-            size="icon"
-            onClick={() => navigate('/dashboard/register')}
-          >
-            Add New User
-          </Button>
+            <Button
+              className="bg-[#126280] hover:bg-[#126280]/80 p-2 md:w-auto"
+              size="icon"
+              onClick={() => navigate("/dashboard/register")}
+            >
+              Add New User
+            </Button>
           </div>
         </div>
-        
 
         {/* Table Section */}
         <div className={embedded ? "p-0" : "px-4 pb-6"}>
@@ -330,28 +330,50 @@ const UserTable = ({ embedded = false }) => {
             <Table className="[&_tbody_tr:hover]:bg-white">
               <TableHeader>
                 <TableRow className="bg-[#126280] hover:bg-[#126280]">
-                  <TableHead className="text-white font-semibold">Name</TableHead>
-                  <TableHead className="text-white font-semibold">Email</TableHead>
-                  <TableHead className="text-white font-semibold">Username</TableHead>
-                  <TableHead className="text-white font-semibold">Contact</TableHead>
-                  <TableHead className="text-white font-semibold">Role</TableHead>
-                  <TableHead className="text-white font-semibold">Status</TableHead>
-                  <TableHead className="text-white font-semibold">Date Registered</TableHead>
-                  <TableHead className="text-white font-semibold text-center">Actions</TableHead>
+                  <TableHead className="text-white font-semibold">
+                    Name
+                  </TableHead>
+                  <TableHead className="text-white font-semibold">
+                    Email
+                  </TableHead>
+                  <TableHead className="text-white font-semibold">
+                    Username
+                  </TableHead>
+                  <TableHead className="text-white font-semibold">
+                    Contact
+                  </TableHead>
+                  <TableHead className="text-white font-semibold">
+                    Role
+                  </TableHead>
+                  <TableHead className="text-white font-semibold">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-white font-semibold">
+                    Date Registered
+                  </TableHead>
+                  <TableHead className="text-white font-semibold text-center">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">Loading...</TableCell>
+                    <TableCell colSpan={8} className="text-center">
+                      Loading...
+                    </TableCell>
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-red-500">{error}</TableCell>
+                    <TableCell colSpan={8} className="text-center text-red-500">
+                      {error}
+                    </TableCell>
                   </TableRow>
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">No users found</TableCell>
+                    <TableCell colSpan={8} className="text-center">
+                      No users found
+                    </TableCell>
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
@@ -361,12 +383,20 @@ const UserTable = ({ embedded = false }) => {
                       <TableCell>{user.username}</TableCell>
                       <TableCell>{user.contact}</TableCell>
                       <TableCell>
-                        <Badge className={`${getRoleBadgeColor(user.role)} text-white`}>
+                        <Badge
+                          className={`${getRoleBadgeColor(
+                            user.role
+                          )} text-white`}
+                        >
                           {user.role.toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${getStatusBadgeColor(user.status)} text-white`}>
+                        <Badge
+                          className={`${getStatusBadgeColor(
+                            user.status
+                          )} text-white`}
+                        >
                           {user.status.toUpperCase()}
                         </Badge>
                       </TableCell>
@@ -379,7 +409,11 @@ const UserTable = ({ embedded = false }) => {
                             className="text-[#126280] hover:text-[#126280]/80"
                             aria-label="View user"
                             title="View"
-                            onClick={() => navigate(`/dashboard/users/${user.id}`, { state: { user } })}
+                            onClick={() =>
+                              navigate(`/dashboard/users/${user.id}`, {
+                                state: { user },
+                              })
+                            }
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -389,7 +423,7 @@ const UserTable = ({ embedded = false }) => {
                             className="text-[#126280] hover:text-[#126280]/80"
                             aria-label="Edit user"
                             title="Edit"
-                            onClick={() => console.log('Edit user', user.id)}
+                            onClick={() => console.log("Edit user", user.id)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -417,19 +451,38 @@ const UserTable = ({ embedded = false }) => {
                   className="bg-white rounded-lg p-4 shadow-md space-y-3"
                 >
                   <div className="flex justify-between items-start">
-                    <h3 className="font-semibold text-[#126280]">{user.name}</h3>
-                    <Badge className={`${getRoleBadgeColor(user.role)} text-white`}>
+                    <h3 className="font-semibold text-[#126280]">
+                      {user.name}
+                    </h3>
+                    <Badge
+                      className={`${getRoleBadgeColor(user.role)} text-white`}
+                    >
                       {user.role.toUpperCase()}
                     </Badge>
                   </div>
                   <div className="text-sm space-y-2">
-                    <p><span className="font-medium">Email:</span> {user.email}</p>
-                    <p><span className="font-medium">Username:</span> {user.username}</p>
-                    <p><span className="font-medium">Contact:</span> {user.contact}</p>
-                    <p><span className="font-medium">Date Registered:</span> {user.dateRegistered}</p>
+                    <p>
+                      <span className="font-medium">Email:</span> {user.email}
+                    </p>
+                    <p>
+                      <span className="font-medium">Username:</span>{" "}
+                      {user.username}
+                    </p>
+                    <p>
+                      <span className="font-medium">Contact:</span>{" "}
+                      {user.contact}
+                    </p>
+                    <p>
+                      <span className="font-medium">Date Registered:</span>{" "}
+                      {user.dateRegistered}
+                    </p>
                   </div>
                   <div className="flex items-center justify-between pt-2">
-                    <Badge className={`${getStatusBadgeColor(user.status)} text-white`}>
+                    <Badge
+                      className={`${getStatusBadgeColor(
+                        user.status
+                      )} text-white`}
+                    >
                       {user.status.toUpperCase()}
                     </Badge>
                     <div className="flex items-center gap-2">
@@ -439,7 +492,11 @@ const UserTable = ({ embedded = false }) => {
                         className="text-[#126280] hover:text-[#126280]/80"
                         aria-label="View user"
                         title="View"
-                        onClick={() => navigate(`/dashboard/users/${user.id}`, { state: { user } })}
+                        onClick={() =>
+                          navigate(`/dashboard/users/${user.id}`, {
+                            state: { user },
+                          })
+                        }
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -449,7 +506,7 @@ const UserTable = ({ embedded = false }) => {
                         className="text-[#126280] hover:text-[#126280]/80"
                         aria-label="Edit user"
                         title="Edit"
-                        onClick={() => console.log('Edit user', user.id)}
+                        onClick={() => console.log("Edit user", user.id)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
