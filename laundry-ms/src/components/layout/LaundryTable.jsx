@@ -63,18 +63,24 @@ const LaundryTable = ({ embedded = false }) => {
                 const result = await response.json();
                 const shops = result.data || [];
                 const transformedShops = shops.map((shop) => {
-                    const rawDate = shop.createdAt || shop.created_at || shop.registrationDate || shop.registeredAt || shop.shop_createdAt || null;
+                    // Fix date handling to match UserTable
+                    const rawDate = shop.date_registered || shop.createdAt || shop.created_at || null;
                     const parsedDate = rawDate ? new Date(rawDate) : null;
+                    
                     return {
-                        id: shop.owner_id,
+                        id: shop.shop_id,
                         ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`,
                         contactNumber: shop.owner_contactNum,
                         address: shop.shop_address,
                         laundryName: shop.shop_name || 'N/A',
                         laundryType: shop.shop_type || 'N/A',
                         status: shop.shop_status,
-                        dateRegistered: parsedDate && !isNaN(parsedDate) ? parsedDate.toLocaleDateString() : '—',
-                        registeredAt: parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : null,
+                        dateRegistered: parsedDate && !isNaN(parsedDate) 
+                            ? parsedDate.toLocaleDateString() 
+                            : '—',
+                        registeredAt: parsedDate && !isNaN(parsedDate) 
+                            ? parsedDate.getTime() 
+                            : null,
                     };
                 });
 
