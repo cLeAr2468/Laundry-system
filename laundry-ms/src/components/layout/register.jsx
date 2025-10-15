@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { fetchWithApiKey } from '@/lib/api'; 
 
 const Register = ({ embedded = false }) => {
     const navigate = useNavigate();
@@ -38,33 +39,33 @@ const Register = ({ embedded = false }) => {
         }
 
         try {
-            const response = await fetch('http://localhost:3000/api/auth/register-admin', {
+            const response = await fetchWithApiKey('/api/public/register-admin', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    admin_fName: formData.admin_fName,
-                    admin_mName: formData.admin_mName,
-                    admin_lName: formData.admin_lName,
-                    admin_address: formData.admin_address,
-                    admin_username: formData.admin_username,
-                    admin_contactNum: formData.admin_contactNum,
-                    email: formData.email,
-                    password: formData.password
+                admin_fName: formData.admin_fName.trim(),
+                admin_mName: formData.admin_mName.trim(),
+                admin_lName: formData.admin_lName.trim(),
+                admin_address: formData.admin_address.trim(),
+                admin_username: formData.admin_username.trim(),
+                admin_contactNum: formData.admin_contactNum.trim(),
+                email: formData.email.trim().toLowerCase(),
+                password: formData.password,
+                role: 'Admin',
+                status: 'Active'
                 })
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
+            if (response.success) {
                 navigate("/dashboard");
             } else {
-                setError(data.message || "Registration failed");
+                setError(response.message || "Registration failed");
             }
         } catch (error) {
             console.error("Registration error:", error);
-            setError("Connection error. Please try again later.");
+            setError(error.message || "Connection error. Please try again later.");
         }
     };
 
