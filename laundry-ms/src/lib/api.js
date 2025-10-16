@@ -51,25 +51,20 @@ export const fetchWithApiKey = async (endpoint, options = {}) => {
             method: options.method || 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-API-Key': API_KEY
+                'X-API-Key': import.meta.env.VITE_API_KEY,
+                ...options.headers
             },
-            mode: 'cors',
-            ...options,
-            headers: {
-                ...options.headers,
-                'X-API-Key': API_KEY
-            }
+            body: options.body
         };
 
         const response = await fetch(`${API_URL}${endpoint}`, defaultOptions);
+        const data = await response.json();
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || `HTTP error! status: ${response.status}`);
+            throw new Error(data.error || `HTTP error! status: ${response.status}`);
         }
 
-        return await response.json();
+        return data;
     } catch (error) {
         console.error('API Error:', error);
         throw error;
