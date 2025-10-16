@@ -50,6 +50,7 @@ const LaundryTable = ({ embedded = false }) => {
 
                 const transformedShops = response.data.map(shop => ({
                     id: shop.shop_id,
+                    shop_id: shop.shop_id, // Add this line to preserve the original shop_id
                     ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`.trim(),
                     contactNumber: shop.owner_contactNum,
                     address: shop.shop_address,
@@ -137,7 +138,10 @@ const LaundryTable = ({ embedded = false }) => {
                 throw new Error("First name is required");
             }
 
-            // Match the backend required fields
+            if (!selectedShop || !selectedShop.shop_id) {
+                throw new Error('No shop selected or invalid shop ID');
+            }
+
             const updatedData = {
                 owner_fName: firstName,
                 owner_mName: middleName || "",
@@ -145,40 +149,43 @@ const LaundryTable = ({ embedded = false }) => {
                 owner_contactNum: formFields.contactNumber,
                 shop_address: formFields.address,
                 shop_name: formFields.laundryName,
-                shop_status: selectedShop.status || "active", // Add status
+                shop_status: selectedShop.status || "active",
                 shop_type: services.join(", ")
             };
 
-            console.log("Sending update request:", updatedData);
+            console.log("Sending update request:", {
+                shopId: selectedShop.shop_id,
+                data: updatedData
+            });
 
             const response = await fetchWithApiKey(
-                `/api/public/edit-shop/${selectedShop.id}`,
+                `/api/auth/edit-shop/${selectedShop.shop_id}`,
                 {
                     method: 'PUT',
                     body: JSON.stringify(updatedData)
                 }
             );
 
-            if (response.success && response.data) {
-                // Update local state with the response data
+            if (!response.success) {
+                throw new Error(response.error || 'Update failed');
+            }
+            
                 setLaundryShops(prevShops => 
                     prevShops.map(shop => 
-                        shop.id === selectedShop.id 
+                        shop.shop_id === selectedShop.shop_id 
                             ? {
                                 ...shop,
-                                ownerName: `${response.data.owner_lName}, ${response.data.owner_fName} ${response.data.owner_mName}`.trim(),
-                                laundryName: response.data.shop_name,
-                                contactNumber: response.data.owner_contactNum,
-                                address: response.data.shop_address,
-                                laundryType: response.data.shop_type,
-                                status: response.data.shop_status
+                                ownerName: `${updatedData.owner_lName}, ${updatedData.owner_fName} ${updatedData.owner_mName}`.trim(),
+                                laundryName: updatedData.shop_name,
+                                contactNumber: updatedData.owner_contactNum,
+                                address: updatedData.shop_address,
+                                laundryType: updatedData.shop_type,
+                                status: updatedData.shop_status
                             }
                             : shop
                     )
                 );
-            }
-
-            setIsDialogOpen(false);
+                setIsDialogOpen(false);
         } catch (error) {
             console.error("Update error:", error);
             alert(error.message);
@@ -290,6 +297,7 @@ const LaundryTable = ({ embedded = false }) => {
                                                 </button>
                                                 <button
                                                     onClick={() => {
+                                                        console.log('Selected shop:', shop); // Add this line
                                                         setSelectedShop(shop);
                                                         const types = (shop.laundryType || "").split(",").map(t => t.trim());
                                                         const hasWashing = types.some(type => 
