@@ -27,7 +27,9 @@ function AppContent() {
   ];
 
   // Check if current path should hide header
-  const shouldHideHeader = hideHeaderRoutes.includes(location.pathname);
+  const shouldHideHeader = hideHeaderRoutes.includes(location.pathname) || 
+    location.pathname.startsWith('/dashboard/users/') ||
+    location.pathname.startsWith('/dashboard/shops/');
 
   return (
     <div className="min-h-screen">
