@@ -251,41 +251,35 @@ const LaundryTable = ({ embedded = false }) => {
                     <Table className="border-collapsee">
                         <TableHeader>
                             <TableRow className="bg-[#31748f] text-white text-sm hover:bg-[#31748f]">
-                                <TableHead className="text-white border-r border-gray-300 last:border-r-0">ID</TableHead>
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">Name/Owner</TableHead>
-                                <TableHead className="text-white border-r border-gray-300 last:border-r-0">Contact Number</TableHead>
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">Address</TableHead>
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">Laundry Name</TableHead>
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">Type of Laundry</TableHead>
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">Status</TableHead>
-                                <TableHead className="text-white border-r border-gray-300 last:border-r-0">Date Registered</TableHead>
                                 <TableHead className="text-white border-r border-gray-300 last:border-r-0">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="text-center">Loading...</TableCell>
+                                    <TableCell colSpan={6} className="text-center">Loading...</TableCell>
                                 </TableRow>
                             ) : error ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="text-center text-red-500">{error}</TableCell>
+                                    <TableCell colSpan={6} className="text-center text-red-500">{error}</TableCell>
                                 </TableRow>
                             ) : filteredLaundryShops.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="text-center">No laundry shops found</TableCell>
+                                    <TableCell colSpan={6} className="text-center">No laundry shops found</TableCell>
                                 </TableRow>
                             ) : (
                                 filteredLaundryShops.map((shop) => (
                                     <TableRow key={shop.id} className="bg-white text-center text-sm hover:bg-white">
-                                        <TableCell className="border-r border-gray-300 last:border-r-0">{shop.id}</TableCell>
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.ownerName}</TableCell>
-                                        <TableCell className="border-r border-gray-300 last:border-r-0">{shop.contactNumber}</TableCell>
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.address}</TableCell>
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.laundryName}</TableCell>
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.laundryType}</TableCell>
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.status}</TableCell>
-                                        <TableCell className="border-r border-gray-300 last:border-r-0">{shop.dateRegistered}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center justify-center gap-4">
                                                 <button

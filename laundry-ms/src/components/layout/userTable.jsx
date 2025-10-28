@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -13,6 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Search, Eye, Pencil } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchWithApiKey } from "@/lib/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const UserTable = ({ embedded = false }) => {
   const [users, setUsers] = useState([]);
@@ -42,6 +50,7 @@ const UserTable = ({ embedded = false }) => {
             name: `${user.user_lName}, ${user.user_fName} ${user.user_mName}`,
             email: user.email,
             username: user.username,
+            address: user.admin_address,
             contact: user.contactNum,
             role: user.role || "user",
             status: user.status || "active",
@@ -64,6 +73,7 @@ const UserTable = ({ embedded = false }) => {
             name: `${admin.admin_lName}, ${admin.admin_fName} ${admin.admin_mName}`,
             email: admin.email,
             username: admin.admin_username,
+            address: admin.admin_address || "—",
             contact: admin.admin_contactNum,
             role: admin.role || "Admin",
             status: admin.status || "Active",
@@ -91,109 +101,99 @@ const UserTable = ({ embedded = false }) => {
 
     fetchUsers();
   }, []);
-  // Sample data array
-  // const [accounts, setAccounts] = useState([
-  //   {
-  //     id: 1,
-  //     name: "John Doe",
-  //     email: "john.doe@email.com",
-  //     username: "johndoe123",
-  //     contact: "09123456789",
-  //     role: "admin",
-  //     status: "active",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Jane Smith",
-  //     email: "jane.smith@email.com",
-  //     username: "janesmith",
-  //     contact: "09187654321",
-  //     role: "staff",
-  //     status: "active",
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Mike Johnson",
-  //     email: "mike.j@email.com",
-  //     username: "mikej",
-  //     contact: "09198765432",
-  //     role: "user",
-  //     status: "inactive",
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "Sarah Wilson",
-  //     email: "sarah.w@email.com",
-  //     username: "sarahw",
-  //     contact: "09567891234",
-  //     role: "staff",
-  //     status: "active",
-  //   },
-  //   {
-  //     id: 5,
-  //     name: "Alex Brown",
-  //     email: "alex.b@email.com",
-  //     username: "alexb",
-  //     contact: "09234567891",
-  //     role: "user",
-  //     status: "pending",
-  //   }
-  // ]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    username: "",
-    contact: "",
-    role: "",
-    password: "",
-    confirmPassword: "",
-  });
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleEditClick = (user) => {
+    setSelectedUser(user);
+    setIsDialogOpen(true);
   };
 
-  const handleRoleChange = (value) => {
-    setFormData((prev) => ({ ...prev, role: value }));
-  };
+  const handleSaveChanges = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const firstName = e.target.firstName.value.trim();
+      const middleName = e.target.middleName.value.trim();
+      const lastName = e.target.lastName.value.trim();
+      const email = e.target.email.value.trim();
+      const username = e.target.username.value.trim();
+      const address = e.target.address.value.trim();
+      const contact = e.target.contact.value.trim();
+      const role = e.target.role.value;
+      const status = e.target.status.value;
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
-      return;
+      // Validate required fields
+      if (!firstName || !lastName || !email || !username || !address || !contact) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      // Construct full name
+      const fullName = `${lastName}, ${firstName}${middleName ? ' ' + middleName : ''}`;
+
+      // Determine if this is a user or admin based on role
+      const isAdmin = selectedUser.role.toLowerCase() === 'admin';
+      const endpoint = isAdmin 
+        ? `/api/auth/edit-admin/${selectedUser.id}`
+        : `/api/auth/edit-user/${selectedUser.id}`;
+
+      const updatedData = isAdmin ? {
+        admin_fName: firstName,
+        admin_mName: middleName || "",
+        admin_lName: lastName,
+        email: email,
+        admin_username: username,
+        admin_address: address,
+        admin_contactNum: contact,
+        role: role,
+        status: status,
+      } : {
+        user_fName: firstName,
+        user_mName: middleName || "",
+        user_lName: lastName,
+        email: email,
+        username: username,
+        cus_address: address,
+        contactNum: contact,
+        role: role,
+        status: status,
+      };
+
+      const response = await fetchWithApiKey(endpoint, {
+        method: 'PUT',
+        body: JSON.stringify(updatedData)
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || 'Update failed');
+      }
+
+      // Update local state
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === selectedUser.id
+            ? {
+                ...user,
+                name: fullName,
+                email: email,
+                username: username,
+                address: address,
+                contact: contact,
+                role: role,
+                status: status,
+              }
+            : user
+        )
+      );
+
+      setIsDialogOpen(false);
+      alert('User updated successfully!');
+    } catch (error) {
+      console.error("Update error:", error);
+      alert(error.message);
     }
-
-    const nextId = accounts.length
-      ? Math.max(...accounts.map((account) => account.id)) + 1
-      : 1;
-
-    const newAccount = {
-      id: nextId,
-      name: formData.name,
-      email: formData.email,
-      username: formData.username,
-      contact: formData.contact,
-      role: formData.role || "user",
-      status: "active",
-    };
-
-    setAccounts((prev) => [...prev, newAccount]);
-
-    setFormData({
-      name: "",
-      email: "",
-      username: "",
-      contact: "",
-      role: "",
-      password: "",
-      confirmPassword: "",
-    });
-    setIsDialogOpen(false);
   };
 
   const getRoleBadgeColor = (role) => {
@@ -281,7 +281,7 @@ const UserTable = ({ embedded = false }) => {
           <div className="flex items-center gap-2 w-full md:w-auto">
             <Input
               type="text"
-              placeholder="Search by name or email..."
+              placeholder="Search by name or address..."
               className="w-full md:w-[300px] bg-gray-300 rounded-full"
             />
             <Button
@@ -334,13 +334,7 @@ const UserTable = ({ embedded = false }) => {
                     Name
                   </TableHead>
                   <TableHead className="text-white font-semibold">
-                    Email
-                  </TableHead>
-                  <TableHead className="text-white font-semibold">
-                    Username
-                  </TableHead>
-                  <TableHead className="text-white font-semibold">
-                    Contact
+                    Address
                   </TableHead>
                   <TableHead className="text-white font-semibold">
                     Role
@@ -359,19 +353,19 @@ const UserTable = ({ embedded = false }) => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-red-500">
+                    <TableCell colSpan={6} className="text-center text-red-500">
                       {error}
                     </TableCell>
                   </TableRow>
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       No users found
                     </TableCell>
                   </TableRow>
@@ -379,9 +373,7 @@ const UserTable = ({ embedded = false }) => {
                   filteredUsers.map((user) => (
                     <TableRow key={user.id} className="bg-white">
                       <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.username}</TableCell>
-                      <TableCell>{user.contact}</TableCell>
+                      <TableCell>{user.address}</TableCell>
                       <TableCell>
                         <Badge
                           className={`${getRoleBadgeColor(
@@ -423,7 +415,7 @@ const UserTable = ({ embedded = false }) => {
                             className="text-[#126280] hover:text-[#126280]/80"
                             aria-label="Edit user"
                             title="Edit"
-                            onClick={() => console.log("Edit user", user.id)}
+                            onClick={() => handleEditClick(user)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -462,15 +454,7 @@ const UserTable = ({ embedded = false }) => {
                   </div>
                   <div className="text-sm space-y-2">
                     <p>
-                      <span className="font-medium">Email:</span> {user.email}
-                    </p>
-                    <p>
-                      <span className="font-medium">Username:</span>{" "}
-                      {user.username}
-                    </p>
-                    <p>
-                      <span className="font-medium">Contact:</span>{" "}
-                      {user.contact}
+                      <span className="font-medium">Address:</span> {user.address}
                     </p>
                     <p>
                       <span className="font-medium">Date Registered:</span>{" "}
@@ -506,7 +490,7 @@ const UserTable = ({ embedded = false }) => {
                         className="text-[#126280] hover:text-[#126280]/80"
                         aria-label="Edit user"
                         title="Edit"
-                        onClick={() => console.log("Edit user", user.id)}
+                        onClick={() => handleEditClick(user)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -517,6 +501,160 @@ const UserTable = ({ embedded = false }) => {
             )}
           </div>
         </div>
+
+        {/* Edit Modal */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[900px] bg-[#D4E9F0]">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="text-2xl font-bold text-slate-800">Edit User</DialogTitle>
+            </DialogHeader>
+
+            {selectedUser && (
+              <form className="space-y-6" onSubmit={handleSaveChanges}>
+                {/* Name Fields */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      name="firstName"
+                      defaultValue={selectedUser.name.split(', ')[1]?.split(' ')[0] || ''}
+                      className="bg-white border-slate-300"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">Middle Name</label>
+                    <Input
+                      name="middleName"
+                      defaultValue={selectedUser.name.split(', ')[1]?.split(' ').slice(1).join(' ') || ''}
+                      className="bg-white border-slate-300"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      name="lastName"
+                      defaultValue={selectedUser.name.split(', ')[0] || ''}
+                      className="bg-white border-slate-300"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Username */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">
+                    Username <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    name="username"
+                    defaultValue={selectedUser.username}
+                    className="bg-white border-slate-300"
+                    placeholder="Enter username"
+                    required
+                  />
+                </div>
+
+                {/* Email and Phone */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      name="email"
+                      type="email"
+                      defaultValue={selectedUser.email}
+                      className="bg-white border-slate-300"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">
+                      Phone Number <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      name="contact"
+                      defaultValue={selectedUser.contact}
+                      className="bg-white border-slate-300"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">
+                    Address <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    name="address"
+                    defaultValue={selectedUser.address}
+                    className="bg-white border-slate-300"
+                    required
+                  />
+                </div>
+
+                {/* Role and Status */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">
+                      Role <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="role"
+                      defaultValue={selectedUser.role.toLowerCase()}
+                      className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#126280]"
+                      required
+                    >
+                      <option value="customer">CUSTOMER</option>
+                      <option value="user">USER</option>
+                      <option value="admin">ADMIN</option>
+                      <option value="staff">STAFF</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">
+                      Status <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="status"
+                      defaultValue={selectedUser.status.toLowerCase()}
+                      className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#126280]"
+                      required
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsDialogOpen(false)}
+                    className="px-8 bg-white hover:bg-slate-100"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="px-8 bg-[#3d5a80] hover:bg-[#2d4a70] text-white"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

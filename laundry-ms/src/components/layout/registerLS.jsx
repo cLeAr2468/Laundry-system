@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ const RegisterLS = ({ embedded = false }) => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
+    admin_id: "",
     firstName: "",
     middleName: "",
     lastName: "",
@@ -23,6 +24,9 @@ const RegisterLS = ({ embedded = false }) => {
       dryClean: false,
     },
   });
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -41,6 +45,66 @@ const RegisterLS = ({ embedded = false }) => {
       },
     }));
   };
+  
+ useEffect(() => {
+  const email = formData.email.trim();
+
+  if (email === "") {
+    setFormData((prev) => ({
+      ...prev,
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      address: "",
+      contact: "",
+      laundryShopName: "",
+      services: { washing: false, dryClean: false },
+    }));
+    setSuggestions([]);
+    setShowSuggestions(false);
+    return;
+  }
+
+  const delayDebounce = setTimeout(async () => {
+    try {
+      const response = await fetchWithApiKey(
+        `/api/auth/admin/search?email=${encodeURIComponent(email)}`,
+        { method: "GET" }
+      );
+
+      if (response?.success && response.data?.length > 0) {
+        setSuggestions(response.data);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (error) {
+      console.error("Admin email search error:", error);
+    }
+  }, 500);
+
+  return () => clearTimeout(delayDebounce);
+}, [formData.email]);
+
+
+
+const handleSelectSuggestion = (admin) => {
+  setFormData((prev) => ({
+    ...prev,
+    admin_id: admin.admin_id,
+    email: admin.email,
+    firstName: admin.admin_fName || "",
+    middleName: admin.admin_mName || "",
+    lastName: admin.admin_lName || "",
+    address: admin.admin_address || "",
+    contact: admin.admin_contactNum || "",
+  }));
+
+  setSuggestions([]);
+  setShowSuggestions(false);
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,6 +118,7 @@ const RegisterLS = ({ embedded = false }) => {
 
         // Prepare the data in the format expected by the backend
         const registrationData = {
+            admin_id: formData.admin_id,
             owner_fName: formData.firstName.trim(),
             owner_mName: formData.middleName.trim(),
             owner_lName: formData.lastName.trim(),
@@ -75,7 +140,7 @@ const RegisterLS = ({ embedded = false }) => {
         });
 
             if (response.message === "Laundry shop registered successfully") {
-                navigate("/dashboard");
+                navigate("/dashboard/shops");
             } else {
                 setError(response.message || "Registration failed");
             }
@@ -112,7 +177,7 @@ const RegisterLS = ({ embedded = false }) => {
               )}
 
               <form onSubmit={handleSubmit}>
-                <div className="space-y-2 w-full mb-4">
+                <div className="space-y-2 w-full mb-4 relative">
                   <Input
                     id="email"
                     type="email"
@@ -122,6 +187,19 @@ const RegisterLS = ({ embedded = false }) => {
                     className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-10 md:h-12"
                     required
                   />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="bg-white border border-gray-300 rounded-md mt-1 shadow-md absolute z-10 w-full">
+                      {suggestions.map((admin) => (
+                        <div
+                          key={admin.admin_id}
+                          onClick={() => handleSelectSuggestion(admin)}
+                          className="px-4 py-2 hover:bg-blue-100 cursor-pointer text-sm text-gray-700"
+                        >
+                          {admin.email}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center justify-center gap-2">

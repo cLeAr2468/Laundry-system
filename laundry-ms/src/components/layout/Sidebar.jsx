@@ -39,7 +39,9 @@ const Sidebar = () => {
             // Check if current path matches item path or is related to the same section
             const isActive = location.pathname === item.path || 
               (item.path === '/dashboard/shops' && location.pathname === '/dashboard/registerLS') ||
-              (item.path === '/dashboard/users' && location.pathname === '/dashboard/register');
+              (item.path === '/dashboard/shops' && location.pathname.startsWith('/dashboard/shops/')) ||
+              (item.path === '/dashboard/users' && location.pathname === '/dashboard/register') ||
+              (item.path === '/dashboard/users' && location.pathname.startsWith('/dashboard/users/'));
             return (
               <Button
                 key={item.name}
