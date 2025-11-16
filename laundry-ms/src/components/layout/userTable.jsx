@@ -50,7 +50,7 @@ const UserTable = ({ embedded = false }) => {
             name: `${user.user_lName}, ${user.user_fName} ${user.user_mName}`,
             email: user.email,
             username: user.username,
-            address: user.admin_address,
+            address: user.cus_address || '—',
             contact: user.contactNum,
             role: user.role || "user",
             status: user.status || "active",
@@ -222,6 +222,11 @@ const UserTable = ({ embedded = false }) => {
     }
   };
 
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  
   // Filters
   const [timeRange, setTimeRange] = useState("all"); // all | weekly | monthly | yearly
   const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
@@ -240,20 +245,48 @@ const UserTable = ({ embedded = false }) => {
     }
   };
 
-  const filteredUsers = users.filter((user) => {
-    // Status filter
-    const statusOk =
-      statusFilter === "all"
-        ? true
-        : (user.status || "").toLowerCase() === statusFilter;
+  // Search function
+  const handleSearch = (user) => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (user.name && user.name.toLowerCase().includes(searchLower)) ||
+      (user.email && user.email.toLowerCase().includes(searchLower)) ||
+      (user.username && user.username.toLowerCase().includes(searchLower)) ||
+      (user.address && user.address.toLowerCase().includes(searchLower)) ||
+      (user.contact && user.contact.includes(searchTerm))
+    );
+  };
 
-    // Time range filter
-    if (!statusOk) return false;
-    const threshold = getTimeThreshold();
-    if (threshold === null) return true;
-    if (!user.registeredAt) return false;
-    return user.registeredAt >= threshold;
-  });
+  // Sort and filter users
+  const filteredUsers = users
+    .filter((user) => {
+      // Search filter
+      if (!handleSearch(user)) return false;
+      
+      // Status filter
+      const statusOk =
+        statusFilter === "all"
+          ? true
+          : (user.status || "").toLowerCase() === statusFilter;
+
+      // Time range filter
+      if (!statusOk) return false;
+      const threshold = getTimeThreshold();
+      if (threshold === null) return true;
+      if (!user.registeredAt) return false;
+      return user.registeredAt >= threshold;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically by name
+
+  // Get current users for pagination
+  const indexOfLastUser = currentPage * itemsPerPage;
+  const indexOfFirstUser = indexOfLastUser - itemsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div
@@ -281,7 +314,12 @@ const UserTable = ({ embedded = false }) => {
           <div className="flex items-center gap-2 w-full md:w-auto">
             <Input
               type="text"
-              placeholder="Search by name or address..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page when searching
+              }}
+              placeholder="Search by name, email, or address..."
               className="w-full md:w-[300px] bg-gray-300 rounded-full"
             />
             <Button
@@ -370,7 +408,7 @@ const UserTable = ({ embedded = false }) => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((user) => (
+                  currentUsers.map((user) => (
                     <TableRow key={user.id} className="bg-white">
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.address}</TableCell>
@@ -500,6 +538,57 @@ const UserTable = ({ embedded = false }) => {
               ))
             )}
           </div>
+
+          {/* Pagination */}
+          {filteredUsers.length > itemsPerPage && (
+            <div className="flex justify-center mt-4 pb-6">
+              <nav className="inline-flex rounded-md shadow">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-l-md border border-gray-300 ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                >
+                  Previous
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  // Show first page, last page, current page, and two surrounding pages
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => paginate(pageNum)}
+                      className={`px-3 py-1 border-t border-b border-r border-gray-300 ${currentPage === pageNum ? 'bg-[#126280] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-r-md border border-l-0 border-gray-300 ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
+          )}
+          
+          {/* Page info */}
+          <div className="text-center text-sm text-gray-600 pb-4">
+            Showing {filteredUsers.length === 0 ? 0 : indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} entries
+          </div>
+
         </div>
 
         {/* Edit Modal */}

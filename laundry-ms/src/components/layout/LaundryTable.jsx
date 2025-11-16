@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Pencil, Eye } from "lucide-react";
+import { ArrowLeft, Pencil, Eye, Search } from "lucide-react";
 import {
     Table,
     TableHeader,
@@ -34,6 +34,11 @@ const LaundryTable = ({ embedded = false }) => {
     const today = format(new Date(), "MMMM dd, yyyy");
     const navigate = useNavigate();
 
+    // Search and filter states
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
+    
     // Filters
     const [timeRange, setTimeRange] = useState("all"); // all | weekly | monthly | yearly
     const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
@@ -48,19 +53,21 @@ const LaundryTable = ({ embedded = false }) => {
                     throw new Error('No data received from server');
                 }
 
-                const transformedShops = response.data.map(shop => ({
-                    id: shop.shop_id,
-                    shop_id: shop.shop_id, // Add this line to preserve the original shop_id
-                    ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`.trim(),
-                    contactNumber: shop.owner_contactNum,
-                    address: shop.shop_address,
-                    laundryName: shop.shop_name || 'N/A',
-                    laundryType: shop.shop_type || 'N/A',
-                    status: shop.shop_status,
-                    dateRegistered: shop.date_registered ? 
-                        new Date(shop.date_registered).toLocaleDateString() : 
-                        '—'
-                }));
+                const transformedShops = response.data.map(shop => {
+                    const registeredDate = shop.date_registered ? new Date(shop.date_registered) : null;
+                    return {
+                        id: shop.shop_id,
+                        shop_id: shop.shop_id,
+                        ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`.trim(),
+                        contactNumber: shop.owner_contactNum,
+                        address: shop.shop_address,
+                        laundryName: shop.shop_name || 'N/A',
+                        laundryType: shop.shop_type || 'N/A',
+                        status: shop.shop_status,
+                        dateRegistered: registeredDate ? registeredDate.toLocaleDateString() : '—',
+                        registeredAt: registeredDate ? registeredDate.getTime() : null
+                    };
+                });
 
                 setLaundryShops(transformedShops);
             } catch (error) {
@@ -89,14 +96,43 @@ const LaundryTable = ({ embedded = false }) => {
         }
     };
 
-    const filteredLaundryShops = laundryShops.filter((shop) => {
-        const statusOk = statusFilter === "all" ? true : (shop.status || "").toLowerCase() === statusFilter;
-        if (!statusOk) return false;
-        const threshold = getTimeThreshold();
-        if (threshold === null) return true;
-        if (!shop.registeredAt) return false;
-        return shop.registeredAt >= threshold;
-    });
+    // Search function
+    const handleSearch = (shop) => {
+        if (!searchTerm) return true;
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            (shop.ownerName && shop.ownerName.toLowerCase().includes(searchLower)) ||
+            (shop.laundryName && shop.laundryName.toLowerCase().includes(searchLower)) ||
+            (shop.address && shop.address.toLowerCase().includes(searchLower)) ||
+            (shop.contactNumber && shop.contactNumber.includes(searchTerm)) ||
+            (shop.laundryType && shop.laundryType.toLowerCase().includes(searchLower))
+        );
+    };
+
+    // Sort and filter shops
+    const filteredLaundryShops = laundryShops
+        .filter((shop) => {
+            // Search filter
+            if (!handleSearch(shop)) return false;
+            
+            // Status filter
+            const statusOk = statusFilter === "all" ? true : (shop.status || "").toLowerCase() === statusFilter;
+            if (!statusOk) return false;
+            const threshold = getTimeThreshold();
+            if (threshold === null) return true;
+            if (!shop.registeredAt) return false;
+            return shop.registeredAt >= threshold;
+        })
+        .sort((a, b) => a.ownerName.localeCompare(b.ownerName)); // Sort alphabetically by owner name
+
+    // Get current shops for pagination
+    const indexOfLastShop = currentPage * itemsPerPage;
+    const indexOfFirstShop = indexOfLastShop - itemsPerPage;
+    const currentShops = filteredLaundryShops.slice(indexOfFirstShop, indexOfLastShop);
+    const totalPages = Math.ceil(filteredLaundryShops.length / itemsPerPage);
+
+    // Change page
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     // Handle save changes
     const handleSaveChanges = async (e) => {
@@ -209,13 +245,21 @@ const LaundryTable = ({ embedded = false }) => {
 
                 {/* Search Bar */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-4 py-2">
-                    <div className="flex justify-start w-full md:w-auto">
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                    <div className="relative w-full md:w-[300px]">
                         <Input
                             type="text"
-                            placeholder="Search"
-                            className="w-[250px] md:w-[350px] bg-[#d8cfe5] rounded-full px-6 py-2 placeholder:text-black"
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1); // Reset to first page when searching
+                            }}
+                            placeholder="Search by shop name, owner, or address..."
+                            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full focus:bg-white focus:ring-2 focus:ring-[#126280] focus:outline-none transition-all duration-200"
                         />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                     </div>
+                </div>
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         <select
                             value={timeRange}
@@ -273,7 +317,7 @@ const LaundryTable = ({ embedded = false }) => {
                                     <TableCell colSpan={6} className="text-center">No laundry shops found</TableCell>
                                 </TableRow>
                             ) : (
-                                filteredLaundryShops.map((shop) => (
+                                currentShops.map((shop) => (
                                     <TableRow key={shop.id} className="bg-white text-center text-sm hover:bg-white">
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.ownerName}</TableCell>
                                         <TableCell className="border-r border-gray-300 last:border-r-0">{shop.address}</TableCell>
@@ -319,7 +363,66 @@ const LaundryTable = ({ embedded = false }) => {
                             )}
                         </TableBody>
                     </Table>
-                </div>
+                
+                {/* Pagination */}
+                {filteredLaundryShops.length > itemsPerPage && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 rounded-b-lg">
+                        <div className="text-sm text-gray-700 mb-2 sm:mb-0">
+                            Showing <span className="font-medium">{filteredLaundryShops.length === 0 ? 0 : indexOfFirstShop + 1}</span> to{' '}
+                            <span className="font-medium">
+                                {Math.min(indexOfLastShop, filteredLaundryShops.length)}
+                            </span>{' '}
+                            of <span className="font-medium">{filteredLaundryShops.length}</span> results
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                variant="outline"
+                                size="sm"
+                                className="px-3 py-1 text-sm"
+                            >
+                                Previous
+                            </Button>
+                            <div className="flex items-center space-x-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <Button
+                                            key={pageNum}
+                                            onClick={() => paginate(pageNum)}
+                                            variant={currentPage === pageNum ? 'default' : 'outline'}
+                                            size="sm"
+                                            className={`w-8 h-8 p-0 ${currentPage === pageNum ? 'bg-[#126280] text-white' : ''}`}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                            <Button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                variant="outline"
+                                size="sm"
+                                className="px-3 py-1 text-sm"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </div>
 
                 {/* Edit Modal */}
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
