@@ -23,7 +23,8 @@ function AppContent() {
     '/login',
     '/dashboard/registerLS',
     '/laundryTable',
-    '/userTable'
+    '/userTable',
+    '/reports'
   ];
 
   // Check if current path should hide header
@@ -50,6 +51,7 @@ function AppContent() {
         <Route path="/dashboard/shops" element={<Dashboard showShops />} />
         <Route path="/dashboard/shops/:id" element={<Dashboard showShopDetails />} />
         <Route path="/dashboard/registerLS" element={<Dashboard showLaundryRegister />} />
+        <Route path="/reports" element={<Dashboard showReports />} />
         <Route path="/register" element={<Register />} />
         <Route path="/registerLS" element={<RegisterLS />} />
         <Route path="/laundryTable" element={<LaundryTable />} /> 
