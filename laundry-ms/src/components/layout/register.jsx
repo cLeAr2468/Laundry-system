@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { fetchWithApiKey } from '@/lib/api'; 
+import { fetchApi } from '@/lib/api'; 
 
 // OTP Modal Component
 const OTPModal = ({ open, onClose, onSubmit, onResend, resendDisabled, resendTimer }) => {
@@ -157,7 +157,7 @@ const Register = ({ embedded = false }) => {
         }
 
         try {
-            const response = await fetchWithApiKey('/api/public/register-admin', {
+            const response = await fetchApi('/api/public/register-admin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
