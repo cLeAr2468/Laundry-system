@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { fetchWithApiKey } from '@/lib/api';
+import { fetchApi } from '@/lib/api';
 
 const LaundryTable = ({ embedded = false }) => {
     const [laundryShops, setLaundryShops] = useState([]);
@@ -47,7 +47,7 @@ const LaundryTable = ({ embedded = false }) => {
         const fetchLaundryShops = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetchWithApiKey('/api/auth/laundry-shops');
+                const response = await fetchApi('/api/auth/laundry-shops');
                 
                 if (!response.success || !response.data) {
                     throw new Error('No data received from server');
@@ -194,7 +194,7 @@ const LaundryTable = ({ embedded = false }) => {
                 data: updatedData
             });
 
-            const response = await fetchWithApiKey(
+            const response = await fetchApi(
                 `/api/auth/edit-shop/${selectedShop.shop_id}`,
                 {
                     method: 'PUT',

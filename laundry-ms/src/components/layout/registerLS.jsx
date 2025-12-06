@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { ShoppingBasket } from "lucide-react";
-import { fetchWithApiKey } from '@/lib/api'; 
+import { fetchApi } from '@/lib/api'; 
 
 const RegisterLS = ({ embedded = false }) => {
   const navigate = useNavigate();
@@ -67,7 +67,7 @@ const RegisterLS = ({ embedded = false }) => {
 
   const delayDebounce = setTimeout(async () => {
     try {
-      const response = await fetchWithApiKey(
+      const response = await fetchApi(
         `/api/auth/admin/search?email=${encodeURIComponent(email)}`,
         { method: "GET" }
       );
@@ -131,7 +131,7 @@ const handleSelectSuggestion = (admin) => {
 
         console.log('Sending registration data:', registrationData);
 
-        const response = await fetchWithApiKey('/api/public/register-laundry-shop', {
+        const response = await fetchApi('/api/public/register-laundry-shop', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

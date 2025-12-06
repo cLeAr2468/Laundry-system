@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Search, Eye, Pencil } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchWithApiKey } from "@/lib/api";
+import { fetchApi } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -31,11 +31,11 @@ const UserTable = ({ embedded = false }) => {
     const fetchUsers = async () => {
       try {
         const [usersResponse, adminsResponse] = await Promise.all([
-          fetchWithApiKey("/api/auth/users"),
-          fetchWithApiKey("/api/auth/admins"),
+          fetchApi("/api/auth/users"),
+          fetchApi("/api/auth/admins"),
         ]);
 
-        // No need to check .ok or call .json() since fetchWithApiKey already handles that
+        // No need to check .ok or call .json() since fetchApi already handles that
         if (!usersResponse.success || !adminsResponse.success) {
           throw new Error("Failed to fetch data");
         }
@@ -50,7 +50,7 @@ const UserTable = ({ embedded = false }) => {
             name: `${user.user_lName}, ${user.user_fName} ${user.user_mName}`,
             email: user.email,
             username: user.username,
-            address: user.cus_address || '—',
+            address: user.user_address || '—',
             contact: user.contactNum,
             role: user.role || "user",
             status: user.status || "active",
@@ -161,7 +161,7 @@ const UserTable = ({ embedded = false }) => {
         status: status,
       };
 
-      const response = await fetchWithApiKey(endpoint, {
+      const response = await fetchApi(endpoint, {
         method: 'PUT',
         body: JSON.stringify(updatedData)
       });
