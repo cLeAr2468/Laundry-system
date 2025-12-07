@@ -11,17 +11,18 @@ import {
 } from "@/components/ui/table";
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from "date-fns";
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogHeader, 
-    DialogTitle, 
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
     DialogDescription,
-    DialogFooter 
+    DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { fetchApi } from '@/lib/api';
+import EditShopModal from "../modals/EditShopModal";
 
 const LaundryTable = ({ embedded = false }) => {
     const [laundryShops, setLaundryShops] = useState([]);
@@ -33,12 +34,11 @@ const LaundryTable = ({ embedded = false }) => {
     const [typeDryClean, setTypeDryClean] = useState(false);
     const today = format(new Date(), "MMMM dd, yyyy");
     const navigate = useNavigate();
-
-    // Search and filter states
+    const [serviceList, setServiceList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
-    
+
     // Filters
     const [timeRange, setTimeRange] = useState("all"); // all | weekly | monthly | yearly
     const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
@@ -47,14 +47,20 @@ const LaundryTable = ({ embedded = false }) => {
         const fetchLaundryShops = async () => {
             try {
                 setIsLoading(true);
+
                 const response = await fetchApi('/api/auth/laundry-shops');
-                
-                if (!response.success || !response.data) {
-                    throw new Error('No data received from server');
+
+                if (!response.success || !response.data || !response.data.shops) {
+                    throw new Error("Invalid API response");
                 }
 
-                const transformedShops = response.data.map(shop => {
-                    const registeredDate = shop.date_registered ? new Date(shop.date_registered) : null;
+                const transformedShops = response.data.shops.map(shop => {
+                    const registeredDate = shop.date_registered
+                        ? new Date(shop.date_registered)
+                        : null;
+
+                    const serviceString = shop.services?.map(s => s.service_name).join(", ") || "None";
+
                     return {
                         id: shop.shop_id,
                         shop_id: shop.shop_id,
@@ -62,7 +68,9 @@ const LaundryTable = ({ embedded = false }) => {
                         contactNumber: shop.owner_contactNum,
                         address: shop.shop_address,
                         laundryName: shop.shop_name || 'N/A',
-                        laundryType: shop.shop_type || 'N/A',
+                        shopSlug: shop.slug,
+                        laundryType: serviceString,
+                        services: shop.services || [],
                         status: shop.shop_status,
                         dateRegistered: registeredDate ? registeredDate.toLocaleDateString() : '—',
                         registeredAt: registeredDate ? registeredDate.getTime() : null
@@ -79,7 +87,12 @@ const LaundryTable = ({ embedded = false }) => {
         };
 
         fetchLaundryShops();
-    }, []); // Remove navigate dependency since we're not using it anymore
+    }, []);
+
+    const openEditModal = (shop) => {
+        setSelectedShop(shop);
+        setIsDialogOpen(true);
+    };
 
     // Derived filters
     const getTimeThreshold = () => {
@@ -114,7 +127,7 @@ const LaundryTable = ({ embedded = false }) => {
         .filter((shop) => {
             // Search filter
             if (!handleSearch(shop)) return false;
-            
+
             // Status filter
             const statusOk = statusFilter === "all" ? true : (shop.status || "").toLowerCase() === statusFilter;
             if (!statusOk) return false;
@@ -135,36 +148,19 @@ const LaundryTable = ({ embedded = false }) => {
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     // Handle save changes
-    const handleSaveChanges = async (e) => {
-        e.preventDefault();
-        
+    const handleSaveChanges = async (formData) => {
+
         try {
+
             // Validate required fields
-            const formFields = {
-                ownerName: e.target.ownerName.value,
-                laundryName: e.target.laundryName.value,
-                contactNumber: e.target.contactNumber.value,
-                address: e.target.address.value
-            };
+            const { ownerName, laundryName, contactNumber, address, services } = formData;
 
-            // Check for empty fields
-            Object.entries(formFields).forEach(([key, value]) => {
-                if (!value.trim()) {
-                    throw new Error(`${key} cannot be empty`);
-                }
-            });
-
-            // Get services
-            const services = [];
-            if (typeWashing) services.push("Washing");
-            if (typeDryClean) services.push("DryClean");
-            
-            if (services.length === 0) {
-                throw new Error("Please select at least one service type");
+            if (!ownerName.trim() || !laundryName.trim() || !contactNumber.trim() || !address.trim()) {
+                throw new Error("All fields are required");
             }
 
             // Split owner name
-            const [lastName, firstAndMiddle] = formFields.ownerName.split(', ');
+            const [lastName, firstAndMiddle] = ownerName.split(', ');
             if (!lastName || !firstAndMiddle) {
                 throw new Error("Owner name must be in format: 'LastName, FirstName MiddleName'");
             }
@@ -178,21 +174,22 @@ const LaundryTable = ({ embedded = false }) => {
                 throw new Error('No shop selected or invalid shop ID');
             }
 
+            const servicesString = formData.services
+                .filter(s => s.is_displayed === "true") // only selected
+                .map(s => s.service_name)
+                .join(", ");
+
             const updatedData = {
                 owner_fName: firstName,
                 owner_mName: middleName || "",
                 owner_lName: lastName,
-                owner_contactNum: formFields.contactNumber,
-                shop_address: formFields.address,
-                shop_name: formFields.laundryName,
+                owner_contactNum: formData.contactNumber,
+                shop_address: formData.address,
+                shop_name: formData.laundryName,
                 shop_status: selectedShop.status || "active",
-                shop_type: services.join(", ")
+                shop_type: servicesString, 
+                services: formData.services 
             };
-
-            console.log("Sending update request:", {
-                shopId: selectedShop.shop_id,
-                data: updatedData
-            });
 
             const response = await fetchApi(
                 `/api/auth/edit-shop/${selectedShop.shop_id}`,
@@ -205,23 +202,23 @@ const LaundryTable = ({ embedded = false }) => {
             if (!response.success) {
                 throw new Error(response.error || 'Update failed');
             }
-            
-                setLaundryShops(prevShops => 
-                    prevShops.map(shop => 
-                        shop.shop_id === selectedShop.shop_id 
-                            ? {
-                                ...shop,
-                                ownerName: `${updatedData.owner_lName}, ${updatedData.owner_fName} ${updatedData.owner_mName}`.trim(),
-                                laundryName: updatedData.shop_name,
-                                contactNumber: updatedData.owner_contactNum,
-                                address: updatedData.shop_address,
-                                laundryType: updatedData.shop_type,
-                                status: updatedData.shop_status
-                            }
-                            : shop
-                    )
-                );
-                setIsDialogOpen(false);
+
+            setLaundryShops(prevShops =>
+                prevShops.map(shop =>
+                    shop.shop_id === selectedShop.shop_id
+                        ? {
+                            ...shop,
+                            ownerName: `${updatedData.owner_lName}, ${updatedData.owner_fName} ${updatedData.owner_mName}`.trim(),
+                            laundryName: updatedData.shop_name,
+                            contactNumber: updatedData.owner_contactNum,
+                            address: updatedData.shop_address,
+                            laundryType: updatedData.shop_type,
+                            status: updatedData.shop_status
+                        }
+                        : shop
+                )
+            );
+            setIsDialogOpen(false);
         } catch (error) {
             console.error("Update error:", error);
             alert(error.message);
@@ -246,20 +243,20 @@ const LaundryTable = ({ embedded = false }) => {
                 {/* Search Bar */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-4 py-2">
                     <div className="flex items-center gap-2 w-full md:w-auto">
-                    <div className="relative w-full md:w-[300px]">
-                        <Input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => {
-                                setSearchTerm(e.target.value);
-                                setCurrentPage(1); // Reset to first page when searching
-                            }}
-                            placeholder="Search by shop name, owner, or address..."
-                            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full focus:bg-white focus:ring-2 focus:ring-[#126280] focus:outline-none transition-all duration-200"
-                        />
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                        <div className="relative w-full md:w-[300px]">
+                            <Input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1); // Reset to first page when searching
+                                }}
+                                placeholder="Search by shop name, owner, or address..."
+                                className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full focus:bg-white focus:ring-2 focus:ring-[#126280] focus:outline-none transition-all duration-200"
+                            />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                        </div>
                     </div>
-                </div>
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         <select
                             value={timeRange}
@@ -280,13 +277,13 @@ const LaundryTable = ({ embedded = false }) => {
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
-                                  <Button
-                                    className="bg-[#126280] hover:bg-[#126280]/80 p-2 md:w-auto"
-                                    size="icon"
-                                    onClick={() => navigate('/dashboard/registerLS')}
-                                  >
-                                    Add Laundry Shop
-                                  </Button>
+                        <Button
+                            className="bg-[#126280] hover:bg-[#126280]/80 p-2 md:w-auto"
+                            size="icon"
+                            onClick={() => navigate('/dashboard/registerLS')}
+                        >
+                            Add Laundry Shop
+                        </Button>
                     </div>
                 </div>
 
@@ -334,23 +331,7 @@ const LaundryTable = ({ embedded = false }) => {
                                                     <Eye size={20} />
                                                 </button>
                                                 <button
-                                                    onClick={() => {
-                                                        console.log('Selected shop:', shop); // Add this line
-                                                        setSelectedShop(shop);
-                                                        const types = (shop.laundryType || "").split(",").map(t => t.trim());
-                                                        const hasWashing = types.some(type => 
-                                                            type.toLowerCase() === "washing" || 
-                                                            type.toLowerCase() === "wash"
-                                                        );
-                                                        const hasDryClean = types.some(type => 
-                                                            type.toLowerCase() === "dryclean" || 
-                                                            type.toLowerCase() === "dry clean" ||
-                                                            type.toLowerCase() === "dry-clean"
-                                                        );
-                                                        setTypeWashing(hasWashing);
-                                                        setTypeDryClean(hasDryClean);
-                                                        setIsDialogOpen(true);
-                                                    }}
+                                                    onClick={() => openEditModal(shop)}
                                                     className="p-2 hover:bg-gray-100 rounded-full text-[#41748f]"
                                                     title="Edit"
                                                 >
@@ -363,146 +344,74 @@ const LaundryTable = ({ embedded = false }) => {
                             )}
                         </TableBody>
                     </Table>
-                
-                {/* Pagination */}
-                {filteredLaundryShops.length > itemsPerPage && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 rounded-b-lg">
-                        <div className="text-sm text-gray-700 mb-2 sm:mb-0">
-                            Showing <span className="font-medium">{filteredLaundryShops.length === 0 ? 0 : indexOfFirstShop + 1}</span> to{' '}
-                            <span className="font-medium">
-                                {Math.min(indexOfLastShop, filteredLaundryShops.length)}
-                            </span>{' '}
-                            of <span className="font-medium">{filteredLaundryShops.length}</span> results
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Button
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                variant="outline"
-                                size="sm"
-                                className="px-3 py-1 text-sm"
-                            >
-                                Previous
-                            </Button>
-                            <div className="flex items-center space-x-1">
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let pageNum;
-                                    if (totalPages <= 5) {
-                                        pageNum = i + 1;
-                                    } else if (currentPage <= 3) {
-                                        pageNum = i + 1;
-                                    } else if (currentPage >= totalPages - 2) {
-                                        pageNum = totalPages - 4 + i;
-                                    } else {
-                                        pageNum = currentPage - 2 + i;
-                                    }
 
-                                    return (
-                                        <Button
-                                            key={pageNum}
-                                            onClick={() => paginate(pageNum)}
-                                            variant={currentPage === pageNum ? 'default' : 'outline'}
-                                            size="sm"
-                                            className={`w-8 h-8 p-0 ${currentPage === pageNum ? 'bg-[#126280] text-white' : ''}`}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                    );
-                                })}
+                    {/* Pagination */}
+                    {filteredLaundryShops.length > itemsPerPage && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 rounded-b-lg">
+                            <div className="text-sm text-gray-700 mb-2 sm:mb-0">
+                                Showing <span className="font-medium">{filteredLaundryShops.length === 0 ? 0 : indexOfFirstShop + 1}</span> to{' '}
+                                <span className="font-medium">
+                                    {Math.min(indexOfLastShop, filteredLaundryShops.length)}
+                                </span>{' '}
+                                of <span className="font-medium">{filteredLaundryShops.length}</span> results
                             </div>
-                            <Button
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
-                                variant="outline"
-                                size="sm"
-                                className="px-3 py-1 text-sm"
-                            >
-                                Next
-                            </Button>
+                            <div className="flex items-center space-x-2">
+                                <Button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    variant="outline"
+                                    size="sm"
+                                    className="px-3 py-1 text-sm"
+                                >
+                                    Previous
+                                </Button>
+                                <div className="flex items-center space-x-1">
+                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                        let pageNum;
+                                        if (totalPages <= 5) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage <= 3) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage >= totalPages - 2) {
+                                            pageNum = totalPages - 4 + i;
+                                        } else {
+                                            pageNum = currentPage - 2 + i;
+                                        }
+
+                                        return (
+                                            <Button
+                                                key={pageNum}
+                                                onClick={() => paginate(pageNum)}
+                                                variant={currentPage === pageNum ? 'default' : 'outline'}
+                                                size="sm"
+                                                className={`w-8 h-8 p-0 ${currentPage === pageNum ? 'bg-[#126280] text-white' : ''}`}
+                                            >
+                                                {pageNum}
+                                            </Button>
+                                        );
+                                    })}
+                                </div>
+                                <Button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    variant="outline"
+                                    size="sm"
+                                    className="px-3 py-1 text-sm"
+                                >
+                                    Next
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
 
                 {/* Edit Modal */}
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                            <DialogTitle>Edit Laundry Shop</DialogTitle>
-                            <DialogDescription>
-                                Update the shop information below.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        {selectedShop && (
-                            <form className="grid gap-4 py-4" onSubmit={handleSaveChanges}>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <label className="text-right">Owner</label>
-                                    <Input
-                                        name="ownerName"
-                                        defaultValue={selectedShop.ownerName}
-                                        className="col-span-3"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <label className="text-right">Laundry Name</label>
-                                    <Input
-                                        name="laundryName"
-                                        defaultValue={selectedShop.laundryName}
-                                        className="col-span-3"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <label className="text-right">Contact</label>
-                                    <Input
-                                        name="contactNumber"
-                                        defaultValue={selectedShop.contactNumber}
-                                        className="col-span-3"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <label className="text-right">Address</label>
-                                    <Input
-                                        name="address"
-                                        defaultValue={selectedShop.address}
-                                        className="col-span-3"
-                                    />
-                                </div>
-
-                                {/* Type checkboxes */}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <label className="text-right">Type</label>
-                                    <div className="col-span-3 flex flex-col gap-2">
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="washing"
-                                                checked={typeWashing}
-                                                onCheckedChange={(checked) => setTypeWashing(!!checked)}
-                                            />
-                                            <label htmlFor="washing" className="text-sm font-medium leading-none">
-                                                Washing
-                                            </label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="dryclean"
-                                                checked={typeDryClean}
-                                                onCheckedChange={(checked) => setTypeDryClean(!!checked)}
-                                            />
-                                            <label htmlFor="dryclean" className="text-sm font-medium leading-none">
-                                                DryClean
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <DialogFooter>
-                                    <Button type="submit">Save changes</Button>
-                                </DialogFooter>
-                            </form>
-                        )}
-                    </DialogContent>
-                </Dialog>
+                <EditShopModal
+                    open={isDialogOpen}
+                    onClose={() => setIsDialogOpen(false)}
+                    shop={selectedShop}
+                    onSave={handleSaveChanges}
+                />
             </div>
         </div>
     );

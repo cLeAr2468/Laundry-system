@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ClipboardCopyIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ShopDetails = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [shop, setShop] = useState(location.state?.shop || null);
+  const [copyStatus, setCopyStatus] = useState(null);
 
   const getStatusBadgeColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -23,6 +25,17 @@ const ShopDetails = () => {
     }
   };
 
+  const copyToClipboard = async (slug) => {
+    try {
+      await navigator.clipboard.writeText(slug);
+      toast.success("Slug copied to clipboard!", {
+        description: slug,
+      });
+    } catch (error) {
+      toast.error("Failed to copy slug");
+    }
+  };
+
   if (!shop) return <div className="p-4">Shop not found.</div>;
 
   return (
@@ -32,7 +45,7 @@ const ShopDetails = () => {
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Shops
         </Button>
       </div>
-      
+
       <div className="space-y-6">
         {/* Shop Profile Header */}
         <div className="flex items-center space-x-4 pb-4 border-b">
@@ -41,6 +54,27 @@ const ShopDetails = () => {
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-slate-800">{shop.laundryName}</h3>
+            {/* Slug Display Section */}
+            <div className="max-w-sm w-full">
+              <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Shop Slug:
+                  </p>
+                  <p className="text-xs italic text-gray-800 mt-1">
+                    {shop.shopSlug}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => copyToClipboard(shop.shopSlug)}
+                  className="p-2 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white transition-all duration-150 shadow hover:shadow-lg"
+                >
+                  <ClipboardCopyIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
             <p className="text-sm text-slate-600 mt-1">{shop.ownerName}</p>
             <div className="flex items-center space-x-2 mt-2">
               <Badge className={`${getStatusBadgeColor(shop.status)} text-white`}>
