@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { ShoppingBasket } from "lucide-react";
-import { fetchApi } from '@/lib/api'; 
+import { fetchApi } from '@/lib/api';
 
 const RegisterLS = ({ embedded = false }) => {
   const navigate = useNavigate();
@@ -45,65 +45,77 @@ const RegisterLS = ({ embedded = false }) => {
       },
     }));
   };
-  
- useEffect(() => {
-  const email = formData.email.trim();
 
-  if (email === "") {
-    setFormData((prev) => ({
-      ...prev,
-      firstName: "",
-      middleName: "",
-      lastName: "",
-      address: "",
-      contact: "",
-      laundryShopName: "",
-      services: { washing: false, dryClean: false },
-    }));
-    setSuggestions([]);
-    setShowSuggestions(false);
-    return;
+  function slugify(text) {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .replace(/--+/g, "-");
   }
 
-  const delayDebounce = setTimeout(async () => {
-    try {
-      const response = await fetchApi(
-        `/api/auth/admin/search?email=${encodeURIComponent(email)}`,
-        { method: "GET" }
-      );
+  useEffect(() => {
+    const email = formData.email.trim();
 
-      if (response?.success && response.data?.length > 0) {
-        setSuggestions(response.data);
-        setShowSuggestions(true);
-      } else {
-        setSuggestions([]);
-        setShowSuggestions(false);
-      }
-    } catch (error) {
-      console.error("Admin email search error:", error);
+    if (email === "") {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        address: "",
+        contact: "",
+        laundryShopName: "",
+        services: { washing: false, dryClean: false },
+      }));
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
-  }, 500);
 
-  return () => clearTimeout(delayDebounce);
-}, [formData.email]);
+    const delayDebounce = setTimeout(async () => {
+      try {
+        const response = await fetchApi(
+          `/api/auth/admin/search?email=${encodeURIComponent(email)}`,
+          { method: "GET" }
+        );
+
+        if (response?.success && response.data?.length > 0) {
+          setSuggestions(response.data);
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } catch (error) {
+        console.error("Admin email search error:", error);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [formData.email]);
 
 
 
-const handleSelectSuggestion = (admin) => {
-  setFormData((prev) => ({
-    ...prev,
-    admin_id: admin.admin_id,
-    email: admin.email,
-    firstName: admin.admin_fName || "",
-    middleName: admin.admin_mName || "",
-    lastName: admin.admin_lName || "",
-    address: admin.admin_address || "",
-    contact: admin.admin_contactNum || "",
-  }));
+  const handleSelectSuggestion = (admin) => {
+    setFormData((prev) => ({
+      ...prev,
+      admin_id: admin.user_id,
+      email: admin.email,
+      firstName: admin.user_fName || "",
+      middleName: admin.user_mName || "",
+      lastName: admin.user_lName || "",
+      address: admin.user_address || "",
+      contact: admin.contactNum || "",
+    }));
 
-  setSuggestions([]);
-  setShowSuggestions(false);
-};
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
 
 
   const handleSubmit = async (e) => {
@@ -111,44 +123,45 @@ const handleSelectSuggestion = (admin) => {
     setError("");
 
     try {
-        // Transform services into string
-        const selectedServices = [];
-        if (formData.services.washing) selectedServices.push("Washing");
-        if (formData.services.dryClean) selectedServices.push("DryClean");
+      // Transform services into string
+      const selectedServices = [];
+      if (formData.services.washing) selectedServices.push("Washing");
+      if (formData.services.dryClean) selectedServices.push("DryClean");
 
-        // Prepare the data in the format expected by the backend
-        const registrationData = {
-            admin_id: formData.admin_id,
-            owner_fName: formData.firstName.trim(),
-            owner_mName: formData.middleName.trim(),
-            owner_lName: formData.lastName.trim(),
-            owner_emailAdd: formData.email.trim().toLowerCase(),
-            owner_contactNum: formData.contact.trim(),
-            shop_address: formData.address.trim(),
-            shop_name: formData.laundryShopName.trim(),
-            shop_type: selectedServices.join(", "),
-        };
+      // Prepare the data in the format expected by the backend
+      const registrationData = {
+        admin_id: formData.admin_id,
+        owner_fName: formData.firstName.trim(),
+        owner_mName: formData.middleName.trim(),
+        owner_lName: formData.lastName.trim(),
+        owner_emailAdd: formData.email.trim().toLowerCase(),
+        owner_contactNum: formData.contact.trim(),
+        shop_address: formData.address.trim(),
+        shop_name: formData.laundryShopName.trim(),
+        slug: slugify(formData.laundryShopName),
+        shop_type: selectedServices.join(", "),
+      };
 
-        console.log('Sending registration data:', registrationData);
+      console.log('Sending registration data:', registrationData);
 
-        const response = await fetchApi('/api/public/register-laundry-shop', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(registrationData)
-        });
+      const response = await fetchApi('/api/public/register-laundry-shop', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData)
+      });
 
-            if (response.message === "Laundry shop registered successfully") {
-                navigate("/dashboard/shops");
-            } else {
-                setError(response.message || "Registration failed");
-            }
+      if (response.message === "Laundry shop registered successfully") {
+        navigate("/dashboard/shops");
+      } else {
+        setError(response.message || "Registration failed");
+      }
     } catch (error) {
-        console.error('Registration error:', error);
-        setError(error.message);
+      console.error('Registration error:', error);
+      setError(error.message);
     }
-};
+  };
 
   return (
     <div
@@ -164,7 +177,7 @@ const handleSelectSuggestion = (admin) => {
           <div className={`w-full ${embedded ? '' : 'max-w-7xl'}`}>
             <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
               <div className="flex items-center justify-center mb-4  max-w-2xl mx-auto">
-               <ShoppingBasket />
+                <ShoppingBasket />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-[#126280] text-center mb-4">
                 Register New Laundry Shop
@@ -238,7 +251,7 @@ const handleSelectSuggestion = (admin) => {
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center justify-center gap-2 mt-4">
-                   <div className="space-y-2 w-full">
+                  <div className="space-y-2 w-full">
                     <Input
                       id="laundryShopName"
                       type="text"
@@ -319,7 +332,7 @@ const handleSelectSuggestion = (admin) => {
                   </div>
                 </div>
 
-                <Button 
+                <Button
                   type="submit"
                   className="w-full mt-6 bg-[#126280] hover:bg-[#126280]/80 h-10 md:h-12 text-sm md:text-base text-white rounded-full font-semibold"
                 >
