@@ -6,6 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { ShoppingBasket } from "lucide-react";
 import { fetchApi } from '@/lib/api';
+import { formatPHNumber } from "@/lib/phoneFormatter";
+import { toast } from "sonner";
 
 const RegisterLS = ({ embedded = false }) => {
   const navigate = useNavigate();
@@ -122,11 +124,19 @@ const RegisterLS = ({ embedded = false }) => {
     e.preventDefault();
     setError("");
 
+    const formattedNumber = formatPHNumber(formData.contact);
+    if (!formattedNumber) {
+      toast.error("Invalid Philippine phone number!");
+      return;
+    }
+
     try {
       // Transform services into string
       const selectedServices = [];
       if (formData.services.washing) selectedServices.push("Washing");
       if (formData.services.dryClean) selectedServices.push("DryClean");
+
+      const formattedNumber = formatPHNumber(formData.contact);
 
       // Prepare the data in the format expected by the backend
       const registrationData = {
@@ -135,7 +145,7 @@ const RegisterLS = ({ embedded = false }) => {
         owner_mName: formData.middleName.trim(),
         owner_lName: formData.lastName.trim(),
         owner_emailAdd: formData.email.trim().toLowerCase(),
-        owner_contactNum: formData.contact.trim(),
+        owner_contactNum: formattedNumber,
         shop_address: formData.address.trim(),
         shop_name: formData.laundryShopName.trim(),
         slug: slugify(formData.laundryShopName),
@@ -153,13 +163,16 @@ const RegisterLS = ({ embedded = false }) => {
       });
 
       if (response.message === "Laundry shop registered successfully") {
+        toast.success(response.message);
         navigate("/dashboard/shops");
       } else {
+        toast.error(response.message || "Registration failed")
         setError(response.message || "Registration failed");
       }
     } catch (error) {
       console.error('Registration error:', error);
       setError(error.message);
+      toast.error(error.message);
     }
   };
 
@@ -267,7 +280,7 @@ const RegisterLS = ({ embedded = false }) => {
                       id="contact"
                       type="tel"
                       placeholder="Contact number"
-                      pattern="09[0-9]{9}"
+                      pattern="^\+639\d{9}$"
                       value={formData.contact}
                       onChange={handleChange}
                       className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-10 md:h-12"
