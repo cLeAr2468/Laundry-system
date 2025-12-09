@@ -21,6 +21,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const UserTable = ({ embedded = false }) => {
   const [users, setUsers] = useState([]);
@@ -30,16 +31,12 @@ const UserTable = ({ embedded = false }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const [usersResponse, adminsResponse] = await Promise.all([
-          fetchApi("/api/auth/users"),
-          fetchApi("/api/auth/admins"),
-        ]);
+        const usersResponse = await fetchApi("/api/auth/users");
 
         // No need to check .ok or call .json() since fetchApi already handles that
-        if (!usersResponse.success || !adminsResponse.success) {
+        if (!usersResponse.success) {
           throw new Error("Failed to fetch data");
         }
-
         // Transform users
         const transformedUsers = usersResponse.data.map((user) => {
           const parsedDate = user.date_registered
@@ -52,8 +49,8 @@ const UserTable = ({ embedded = false }) => {
             username: user.username,
             address: user.user_address || '—',
             contact: user.contactNum,
-            role: user.role || "user",
-            status: user.status || "active",
+            role: user.role || "USERS",
+            status: user.status || "ACTIVE",
             dateRegistered:
               parsedDate && !isNaN(parsedDate)
                 ? parsedDate.toLocaleDateString()
@@ -63,33 +60,8 @@ const UserTable = ({ embedded = false }) => {
           };
         });
 
-        // Transform admins
-        const transformedAdmins = adminsResponse.data.map((admin) => {
-          const parsedDate = admin.date_registered
-            ? new Date(admin.date_registered)
-            : null;
-          return {
-            id: admin.admin_id,
-            name: `${admin.admin_lName}, ${admin.admin_fName} ${admin.admin_mName}`,
-            email: admin.email,
-            username: admin.admin_username,
-            address: admin.admin_address || "—",
-            contact: admin.admin_contactNum,
-            role: admin.role || "Admin",
-            status: admin.status || "Active",
-            dateRegistered:
-              parsedDate && !isNaN(parsedDate)
-                ? parsedDate.toLocaleDateString()
-                : "—",
-            registeredAt:
-              parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : null,
-          };
-        });
-
-        // Combine both arrays
-        const combinedUsers = [...transformedUsers, ...transformedAdmins];
-        console.log("Combined users:", combinedUsers);
-        setUsers(combinedUsers);
+        console.log("Combined users:", transformedUsers);
+        setUsers(transformedUsers);
       } catch (error) {
         console.error("Fetch error:", error);
         setError(error.message);
@@ -113,7 +85,7 @@ const UserTable = ({ embedded = false }) => {
 
   const handleSaveChanges = async (e) => {
     e.preventDefault();
-    
+
     try {
       const firstName = e.target.firstName.value.trim();
       const middleName = e.target.middleName.value.trim();
@@ -133,23 +105,7 @@ const UserTable = ({ embedded = false }) => {
       // Construct full name
       const fullName = `${lastName}, ${firstName}${middleName ? ' ' + middleName : ''}`;
 
-      // Determine if this is a user or admin based on role
-      const isAdmin = selectedUser.role.toLowerCase() === 'admin';
-      const endpoint = isAdmin 
-        ? `/api/auth/edit-admin/${selectedUser.id}`
-        : `/api/auth/edit-user/${selectedUser.id}`;
-
-      const updatedData = isAdmin ? {
-        admin_fName: firstName,
-        admin_mName: middleName || "",
-        admin_lName: lastName,
-        email: email,
-        admin_username: username,
-        admin_address: address,
-        admin_contactNum: contact,
-        role: role,
-        status: status,
-      } : {
+      const updatedData = {
         user_fName: firstName,
         user_mName: middleName || "",
         user_lName: lastName,
@@ -161,7 +117,7 @@ const UserTable = ({ embedded = false }) => {
         status: status,
       };
 
-      const response = await fetchApi(endpoint, {
+      const response = await fetchApi(`/api/auth/edit-user/${selectedUser.id}`, {
         method: 'PUT',
         body: JSON.stringify(updatedData)
       });
@@ -175,24 +131,24 @@ const UserTable = ({ embedded = false }) => {
         prevUsers.map(user =>
           user.id === selectedUser.id
             ? {
-                ...user,
-                name: fullName,
-                email: email,
-                username: username,
-                address: address,
-                contact: contact,
-                role: role,
-                status: status,
-              }
+              ...user,
+              name: fullName,
+              email: email,
+              username: username,
+              address: address,
+              contact: contact,
+              role: role,
+              status: status,
+            }
             : user
         )
       );
 
       setIsDialogOpen(false);
-      alert('User updated successfully!');
+      toast.success('User updated successfully!');
     } catch (error) {
       console.error("Update error:", error);
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 
@@ -226,7 +182,7 @@ const UserTable = ({ embedded = false }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  
+
   // Filters
   const [timeRange, setTimeRange] = useState("all"); // all | weekly | monthly | yearly
   const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
@@ -263,7 +219,7 @@ const UserTable = ({ embedded = false }) => {
     .filter((user) => {
       // Search filter
       if (!handleSearch(user)) return false;
-      
+
       // Status filter
       const statusOk =
         statusFilter === "all"
@@ -562,7 +518,7 @@ const UserTable = ({ embedded = false }) => {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <button
                       key={pageNum}
@@ -583,7 +539,7 @@ const UserTable = ({ embedded = false }) => {
               </nav>
             </div>
           )}
-          
+
           {/* Page info */}
           <div className="text-center text-sm text-gray-600 pb-4">
             Showing {filteredUsers.length === 0 ? 0 : indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} entries
@@ -700,10 +656,10 @@ const UserTable = ({ embedded = false }) => {
                       className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#126280]"
                       required
                     >
-                      <option value="customer">CUSTOMER</option>
-                      <option value="user">USER</option>
-                      <option value="admin">ADMIN</option>
-                      <option value="staff">STAFF</option>
+                      <option value="CUSTOMER">CUSTOMER</option>
+                      <option value="USER">USER</option>
+                      <option value="ADMIN">ADMIN</option>
+                      <option value="STAFF">STAFF</option>
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -716,25 +672,25 @@ const UserTable = ({ embedded = false }) => {
                       className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#126280]"
                       required
                     >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="pending">Pending</option>
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="INACTIVE">INACTIVE</option>
+                      <option value="PENDING">PENDING</option>
                     </select>
                   </div>
                 </div>
 
                 {/* Buttons */}
                 <div className="flex justify-end gap-3 pt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => setIsDialogOpen(false)}
                     className="px-8 bg-white hover:bg-slate-100"
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="px-8 bg-[#3d5a80] hover:bg-[#2d4a70] text-white"
                   >
                     Save Changes
