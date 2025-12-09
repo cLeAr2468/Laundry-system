@@ -1,8 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { fetchApi } from "@/lib/api";
+import { createClient } from "@supabase/supabase-js";
+import { toast } from "sonner";
+
+const supabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 const Login = () => {
     const [username, setUsername] = useState("admin");
@@ -10,27 +18,68 @@ const Login = () => {
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const hash = window.location.hash;
+
+        if (!hash) return;
+
+        const params = new URLSearchParams(hash.replace("#", ""));
+        const access_token = params.get("access_token");
+
+
+        if (!access_token) {
+            console.log("No access_token found in redirect URL");
+            return;
+        }
+
+        console.log("ACCESS TOKEN RECEIVED FROM SUPABASE:", access_token);
+
+        fetch(import.meta.env.VITE_SUPER_ADMIN_LOGIN, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        })
+            .then(async (res) => {
+                console.log("Server Response Status:", res.status);
+
+                if (!res.ok) throw new Error("Unauthorized");
+                const data = await res.json();
+                console.log("Backend Response JSON:", data);
+
+                toast.success(data.message);
+                localStorage.setItem("token", access_token);
+                navigate("/dashboard");
+            })
+            .catch((err) => {
+                console.error("Backend Auth Error:", err);
+                toast.error("Not authorized or token expired.");
+                setError("Not authorized or token expired.");
+            })
+            .finally(() => {
+                window.history.replaceState(null, null, window.location.pathname);
+            });
+    }, [navigate]);
+
+
     const handleLogin = (e) => {
         e.preventDefault();
         setError("");
 
-        // Simple hardcoded authentication
         if (username === "admin" && password === "password") {
-            // Navigate to dashboard on successful login
             navigate("/dashboard");
         } else {
-            setError("Invalid username or password. Use admin/password");
+            setError("Invalid login.");
         }
     };
 
     return (
-        <div className="min-h-screen bg-cover bg-center"
-            style={{
-                backgroundImage: "url('/laundry-logo.jpg')",
-            }}
+        <div
+            className="min-h-screen bg-cover bg-center"
+            style={{ backgroundImage: "url('/laundry-logo.jpg')" }}
         >
-            <div className='bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-20'>
-                <div className='container flex flex-col md:flex-row items-center justify-evenly min-h-[500px] gap-8 md:gap-20 mx-auto px-4 md:px-[15%]'>
+            <div className="bg-[#A4DCF4] bg-opacity-80 min-h-screen pt-10 md:pt-20">
+                <div className="container flex flex-col md:flex-row items-center justify-evenly min-h-[500px] gap-8 md:gap-20 mx-auto px-4 md:px-[15%]">
                     {/* Left Side - Image */}
                     <div className="hidden md:block">
                         <img
@@ -42,10 +91,9 @@ const Login = () => {
                             }}
                         />
                     </div>
-
                     <div className="w-full md:w-[440px]">
                         <Card className="w-full shadow-lg bg-[#E4F4FC]/80">
-                            <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
+                            <CardContent className="space-y-4 p-6">
                                 <div className="flex items-center justify-center mb-2 md:mb-4">
                                     <img
                                         src="/user.jpg"
@@ -54,57 +102,81 @@ const Login = () => {
                                     />
                                 </div>
 
-                                <h2 className="text-xl md:text-2xl font-bold text-center">Login</h2>
-                                
+                                <h2 className="text-2xl font-bold text-center">Login</h2>
+
                                 {error && (
-                                    <p className="text-red-500 text-sm text-center font-semibold">
-                                        {error}
-                                    </p>
+                                    <p className="text-red-500 text-center font-semibold">{error}</p>
                                 )}
 
+                                {/* Username/Password Login */}
                                 <form onSubmit={handleLogin}>
-                                    <div className="space-y-2">
-                                        <Input
-                                            id="username"
-                                            type="text"
-                                            placeholder="Username/Email"
-                                            className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base h-10 md:h-12"
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-2 mt-2">
-                                        <Input
-                                            id="password"
-                                            type="password"
-                                            placeholder="Password"
-                                            className="bg-gray-300 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base h-10 md:h-12"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            required
-                                        />
-                                    </div>
+                                    <Input
+                                        type="text"
+                                        placeholder="Username/Email"
+                                        className="bg-gray-300 rounded-full"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        required
+                                    />
+
+                                    <Input
+                                        type="password"
+                                        placeholder="Password"
+                                        className="bg-gray-300 rounded-full mt-2"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                    />
                                     <p className="text-sm md:text-md text-gray-600 mt-2 md:mt-4 text-right font-semibold">
                                         <a href="/Forgotpassword" className="text-blue-600 hover:underline">
                                             Forgot password
                                         </a>
                                     </p>
 
-                                    <Button 
+                                    <Button
                                         type="submit"
-                                        className="w-full mt-2 md:mt-4 bg-[#126280] hover:bg-[#126280]/80 h-10 md:h-12 text-sm md:text-base text-white"
+                                        className="w-full mt-4 bg-[#126280] text-white rounded-full"
                                     >
                                         Login
                                     </Button>
                                 </form>
+                                {/* Google Login Button */}
+                                <div className="text-center mt-4">
+                                    <p className="text-sm text-gray-600 mb-2">OR</p>
 
-                                <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
-                                    <a href="/" className="text-blue-600 font-semibold hover:underline">Back to Home</a>
-                                </p>
+                                    <Button
+                                        onClick={async () => {
+                                            const { data, error } = await supabase.auth.signInWithOAuth({
+                                                provider: "google",
+                                                options: {
+                                                    redirectTo: "http://localhost:5173/login",
+                                                },
+                                            });
+
+                                            if (error) {
+                                                console.error(error);
+                                                alert("Google login failed");
+                                            }
+                                        }}
+                                        className="w-full flex items-center justify-center gap-2 border border-gray-300 
+                                            bg-white text-gray-700 hover:bg-gray-100 font-medium py-2 rounded-lg 
+                                              shadow-sm transition-all"
+                                    >
+                                        <img
+                                            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                                            alt="Google Logo"
+                                            className="w-5 h-5"
+                                        />
+                                        <span>Sign in with Google</span>
+                                    </Button>
+                                    <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
+                                        <a href="/" className="text-blue-600 font-semibold hover:underline">Back to Home</a>
+                                    </p>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
+
                 </div>
             </div>
         </div>
