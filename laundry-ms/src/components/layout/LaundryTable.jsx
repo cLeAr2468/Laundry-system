@@ -64,8 +64,8 @@ const LaundryTable = ({ embedded = false }) => {
                     return {
                         id: shop.shop_id,
                         shop_id: shop.shop_id,
-                        ownerName: `${shop.owner_lName}, ${shop.owner_fName} ${shop.owner_mName}`.trim(),
-                        contactNumber: shop.owner_contactNum,
+                        ownerName: `${shop.admin_lName}, ${shop.admin_fName} ${shop.admin_mName}`.trim(),
+                        contactNumber: shop.admin_contactNum,
                         address: shop.shop_address,
                         laundryName: shop.shop_name || 'N/A',
                         shopSlug: shop.slug,
