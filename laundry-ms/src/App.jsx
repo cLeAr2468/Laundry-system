@@ -10,6 +10,7 @@ import Login from './components/layout/Login';
 import Dashboard from './components/layout/dashboard';
 import RegisterLS from './components/layout/registerLS';
 import LaundryTable from './components/layout/LaundryTable';
+import { Toaster } from './components/ui/sonner';
 
 function AppContent() {
   const location = useLocation();
@@ -23,11 +24,12 @@ function AppContent() {
     '/login',
     '/dashboard/registerLS',
     '/laundryTable',
-    '/userTable'
+    '/userTable',
+    '/reports'
   ];
 
   // Check if current path should hide header
-  const shouldHideHeader = hideHeaderRoutes.includes(location.pathname) || 
+  const shouldHideHeader = hideHeaderRoutes.includes(location.pathname) ||
     location.pathname.startsWith('/dashboard/users/') ||
     location.pathname.startsWith('/dashboard/shops/');
 
@@ -41,7 +43,7 @@ function AppContent() {
         <Route path="/services" element={<Services />} />
         <Route path="/prices" element={<Prices />} />
         <Route path="/login" element={<Login />} />
-        
+
         {/* Protected Routes */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/users" element={<Dashboard showUsers />} />
@@ -50,9 +52,10 @@ function AppContent() {
         <Route path="/dashboard/shops" element={<Dashboard showShops />} />
         <Route path="/dashboard/shops/:id" element={<Dashboard showShopDetails />} />
         <Route path="/dashboard/registerLS" element={<Dashboard showLaundryRegister />} />
+        <Route path="/reports" element={<Dashboard showReports />} />
         <Route path="/register" element={<Register />} />
         <Route path="/registerLS" element={<RegisterLS />} />
-        <Route path="/laundryTable" element={<LaundryTable />} /> 
+        <Route path="/laundryTable" element={<LaundryTable />} />
       </Routes>
     </div>
   );
@@ -61,6 +64,8 @@ function AppContent() {
 function App() {
   return (
     <Router>
+      {/* <Toaster position="top-right" /> */}
+      <Toaster position="top-right" richColors />
       <AppContent />
     </Router>
   );

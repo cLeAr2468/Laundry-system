@@ -1,111 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { fetchWithApiKey } from '@/lib/api'; 
+import { fetchApi } from '@/lib/api';
+import { formatPHNumber } from "@/lib/phoneFormatter";
+import OTPModal from "@/components/modals/OTPModal";
+import { toast } from "sonner";
 
-// OTP Modal Component
-const OTPModal = ({ open, onClose, onSubmit, onResend, resendDisabled, resendTimer }) => {
-    const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-    const inputsRef = React.useRef([]);
-
-    if (!open) return null;
-
-    const handleChange = (e, idx) => {
-        const value = e.target.value.replace(/[^0-9]/g, "");
-        if (value.length > 1) return;
-        const newOtp = [...otp];
-        newOtp[idx] = value;
-        setOtp(newOtp);
-
-        if (value && idx < 5) {
-            inputsRef.current[idx + 1].focus();
-        }
-    };
-
-    const handleKeyDown = (e, idx) => {
-        if (e.key === "Backspace" && !otp[idx] && idx > 0) {
-            inputsRef.current[idx - 1].focus();
-        }
-    };
-
-    const handlePaste = (e) => {
-        const paste = e.clipboardData.getData("text").slice(0, 6).split("");
-        const newOtp = [...otp];
-        paste.forEach((char, idx) => {
-            if (idx < 6) newOtp[idx] = char.replace(/[^0-9]/g, "");
-        });
-        setOtp(newOtp);
-        const lastIdx = paste.length - 1;
-        if (inputsRef.current[lastIdx]) {
-            inputsRef.current[lastIdx].focus();
-        }
-        e.preventDefault();
-    };
-
-    // whether all OTP digits are filled
-    const isOtpComplete = otp.every(d => d !== "");
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
-                <div className="flex justify-center mb-2">
-                    <img
-                        src="/password-access.png"
-                        alt="OTP Icon"
-                        className="w-14 h-14"
-                    />
-                </div>
-                <h3 className="text-lg font-bold mb-2 text-center text-[#126280]">Account Verification</h3>
-                <p className="text-sm text-gray-600 mb-4 text-center">Please enter the OTP sent to your email.</p>
-                <div className="flex justify-center gap-2 mb-4" onPaste={handlePaste}>
-                    {otp.map((digit, idx) => (
-                        <input
-                            key={idx}
-                            ref={el => inputsRef.current[idx] = el}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            onChange={e => handleChange(e, idx)}
-                            onKeyDown={e => handleKeyDown(e, idx)}
-                            className="w-10 h-12 text-center text-xl border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-100"
-                        />
-                    ))}
-                </div>
-                <div className="flex gap-2 mb-2">
-                    <Button
-                        className="w-full bg-[#126280] hover:bg-[#126280]/80 text-white rounded-full font-semibold"
-                        onClick={() => isOtpComplete && onSubmit(otp.join(""))}
-                        disabled={!isOtpComplete}
-                    >
-                        Submit
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="w-full rounded-full"
-                        onClick={onClose}
-                    >
-                        Cancel
-                    </Button>
-                </div>
-                <div className="text-center mt-2">
-                    <Button
-                        variant="ghost"
-                        className="text-blue-600 font-semibold"
-                        onClick={onResend}
-                        disabled={resendDisabled}
-                    >
-                        Resend OTP {resendDisabled && resendTimer > 0 ? `(${resendTimer}s)` : ""}
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const Register = ({ embedded = false }) => {
+const Register = ({ onClose, onSave, embedded = false }) => {
     const navigate = useNavigate();
     const [error, setError] = useState("");
     const [formData, setFormData] = useState({
@@ -121,22 +24,26 @@ const Register = ({ embedded = false }) => {
     });
 
     // OTP Modal state
-        const [showOTPModal, setShowOTPModal] = useState(false);
-    
-        // Resend OTP state
-        const [resendDisabled, setResendDisabled] = useState(false);
-        const [resendTimer, setResendTimer] = useState(0);
-    
-        // Timer effect for resend button
-        React.useEffect(() => {
-            let timer;
-            if (resendDisabled && resendTimer > 0) {
-                timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
-            } else if (resendTimer === 0) {
-                setResendDisabled(false);
-            }
-            return () => clearTimeout(timer);
-        }, [resendDisabled, resendTimer]);
+    const [showOTPModal, setShowOTPModal] = useState(false);
+    const [resendDisabled, setResendDisabled] = useState(false);
+    const [resendTimer, setResendTimer] = useState(0);
+    const [sendingOTP, setSendingOTP] = useState(false);
+    const [otpResetKey, setOtpResetKey] = useState(0);
+
+
+    useEffect(() => {
+        let interval;
+
+        if (resendDisabled && resendTimer > 0) {
+            interval = setInterval(() => {
+                setResendTimer(prev => prev - 1);
+            }, 1000);
+        } else if (resendDisabled && resendTimer === 0) {
+            setResendDisabled(false); // enable button when timer reaches 0
+        }
+
+        return () => clearInterval(interval);
+    }, [resendDisabled, resendTimer]);
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -156,54 +63,110 @@ const Register = ({ embedded = false }) => {
             return;
         }
 
+        const formattedNumber = formatPHNumber(formData.admin_contactNum);
+        if (!formattedNumber) {
+            toast.error("Invalid Philippine phone number!");
+            return;
+        }
+
         try {
-            const response = await fetchWithApiKey('/api/public/register-admin', {
+            setSendingOTP(true);
+            const response = await fetchApi("/api/auth/send-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: formData.email })
+            });
+
+            if (!response.success) throw new Error(response.message || "Something went wrong");
+
+            setShowOTPModal(true);
+            setResendDisabled(true);
+            setResendTimer(30); // 3 mins
+
+        } catch (err) {
+            console.error("API error:", err);
+            toast.error(err.message || "Something went wrong");
+        } finally {
+            setSendingOTP(false);
+        }
+    };
+
+    // Dummy OTP submit handler
+    const handleOTPSubmit = async (otp) => {
+        try {
+            const verify = await fetchApi("/api/auth/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: formData.email, otp })
+            });
+
+            if (!verify.success) {
+                toast.error("Invalid OTP");
+                return;
+            }
+
+            const formattedNumber = formatPHNumber(formData.admin_contactNum);
+
+            const register = await fetchApi('/api/public/register-admin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                admin_fName: formData.admin_fName.trim(),
-                admin_mName: formData.admin_mName.trim(),
-                admin_lName: formData.admin_lName.trim(),
-                admin_address: formData.admin_address.trim(),
-                admin_username: formData.admin_username.trim(),
-                admin_contactNum: formData.admin_contactNum.trim(),
-                email: formData.email.trim().toLowerCase(),
-                password: formData.password,
-                role: 'Admin',
-                status: 'Active'
+                    admin_fName: formData.admin_fName.trim(),
+                    admin_mName: formData.admin_mName.trim(),
+                    admin_lName: formData.admin_lName.trim(),
+                    admin_address: formData.admin_address.trim(),
+                    admin_username: formData.admin_username.trim(),
+                    admin_contactNum: formattedNumber,
+                    email: formData.email.trim().toLowerCase(),
+                    password: formData.password,
+                    role: 'ADMIN',
+                    status: 'ACTIVE'
                 })
             });
 
-            if (response.success) {
-                navigate("/dashboard");
-            } else {
-                setError(response.message || "Registration failed");
+            if (!register.success) {
+                toast.error(register.message || "Failed to register customer");
+                return;
             }
-        } catch (error) {
-            console.error("Registration error:", error);
-            setError(error.message || "Connection error. Please try again later.");
-        }
-        // For demo, directly show OTP modal
-        setShowOTPModal(true);
-        setResendDisabled(true);
-        setResendTimer(30); // 30 seconds cooldown
-    };
 
-     // Dummy OTP submit handler
-    const handleOTPSubmit = (otp) => {
-        // Add OTP verification logic here
-        setShowOTPModal(false);
-        navigate("/dashboard");
+            toast.success(register.message || "Customer registered successfully!");
+            setShowOTPModal(false);
+            onSave?.("SUCCESS");
+            onClose?.();
+            navigate('/dashboard/users')
+        } catch (error) {
+            console.error("API error:", error);
+            toast.error(error.message || "Something went wrong");
+            setOtpResetKey(prev => prev + 1);
+            setShowOTPModal(false);
+        }
     };
 
     // Dummy resend OTP handler
-    const handleResendOTP = () => {
-        // Add resend OTP logic here
-        setResendDisabled(true);
-        setResendTimer(30); // 30 seconds cooldown
+    const handleResendOTP = async () => {
+        try {
+            setResendDisabled(true);
+            setResendTimer(30);
+            toast("Resending OTP...");
+
+            const response = await fetchApi("/api/auth/send-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: formData.email })
+            });
+
+            if (!response.success) throw new Error(response.message || "Failed to resend OTP");
+
+            toast.success("OTP resent successfully!");
+        } catch (err) {
+            console.error(err);
+            toast.error(err.message || "Failed to resend OTP");
+            setResendDisabled(false);
+        }
     };
+
 
     return (
         <div className={embedded ? "w-full" : "min-h-screen bg-cover bg-center"}
@@ -364,14 +327,15 @@ const Register = ({ embedded = false }) => {
                                     </div>
                                 </div>
 
-                                <Button 
+                                <Button
                                     type="submit"
                                     className="w-full mt-6 bg-[#126280] hover:bg-[#126280]/80 h-10 md:h-12 text-sm md:text-base text-white rounded-full font-semibold"
+                                    disabled={sendingOTP}
                                 >
-                                    Register User
-                                </Button>         
+                                    {sendingOTP ? "Sening OTP..." : <>Register User</>}
+                                </Button>
                             </form>
-                            
+
                             {!embedded && (
                                 <p className="text-sm md:text-md text-center text-gray-600 mt-2 md:mt-4">
                                     <a href="/dashboard" className="text-blue-600 font-semibold hover:underline text-lg">Back</a>
@@ -384,11 +348,15 @@ const Register = ({ embedded = false }) => {
             {/* OTP Modal */}
             <OTPModal
                 open={showOTPModal}
-                onClose={() => setShowOTPModal(false)}
+                onClose={() => {
+                    setOtpResetKey(prev => prev + 1);
+                    setShowOTPModal(false);
+                }}
                 onSubmit={handleOTPSubmit}
                 onResend={handleResendOTP}
                 resendDisabled={resendDisabled}
                 resendTimer={resendTimer}
+                resetTrigger={otpResetKey}
             />
         </div>
     );

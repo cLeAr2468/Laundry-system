@@ -9,8 +9,17 @@ import UserDetails from './userDetails';
 import ShopDetails from './shopDetails';
 import Register from './register';
 import RegisterLS from './registerLS';
+import ReportsDashboard from './ReportsDashboard';
 
-const Dashboard = ({ showUsers = false, showShops = false, showUserDetails = false, showShopDetails = false, showRegister = false, showLaundryRegister = false }) => {
+const Dashboard = ({ 
+  showUsers = false, 
+  showShops = false, 
+  showUserDetails = false, 
+  showShopDetails = false, 
+  showRegister = false, 
+  showLaundryRegister = false,
+  showReports = false 
+}) => {
   return (
     <div className="flex h-screen bg-transparent">
       <Sidebar />
@@ -46,13 +55,24 @@ const Dashboard = ({ showUsers = false, showShops = false, showUserDetails = fal
                 <Register embedded />
               </CardContent>
             </Card>
-          ) : showLaundryRegister ? (
+) : showLaundryRegister ? (
             <Card className="bg-white shadow-lg border-0">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-[#126280]">REGISTER NEW LAUNDRY SHOP</CardTitle>
               </CardHeader>
               <CardContent>
                 <RegisterLS embedded />
+              </CardContent>
+            </Card>
+          ) : showReports ? (
+            <Card className="bg-white shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-slate-800">
+                  REPORTS DASHBOARD
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ReportsDashboard />
               </CardContent>
             </Card>
           ) : showUserDetails ? (

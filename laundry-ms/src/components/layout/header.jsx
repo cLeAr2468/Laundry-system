@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { Button } from '../ui/button.jsx';
-import { Menu, X } from 'lucide-react';
+import { ArrowRightIcon, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom'; // Add this import
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const token = localStorage.getItem("token");
+
+  const isLoggedIn = (token);
 
   return (
     <header className="bg-[#126280] p-4 text-white fixed top-0 left-0 right-0 z-50">
@@ -21,15 +25,27 @@ const Header = () => {
             <li><Link to="/services" className="hover:underline">SERVICES</Link></li>
             <li><Link to="/prices" className="hover:underline">PRICES</Link></li>
           </ul>
-          <Link to="/login">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-black border-[#126280] hover:bg-white hover:text-[#126280]"
-            >
-              LOGIN
-            </Button>
-          </Link>
+          {isLoggedIn ? (
+            <Link to="/dashboard">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-black border-[#126280] hover:bg-white hover:text-[#126280]"
+              >
+                Back to dashboard <ArrowRightIcon/>
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/login">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-black border-[#126280] hover:bg-white hover:text-[#126280]"
+              >
+                LOGIN
+              </Button>
+            </Link>
+          )}
         </nav>
 
         <div className="md:hidden">
