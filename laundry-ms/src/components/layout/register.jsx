@@ -121,8 +121,8 @@ const Register = ({ onClose, onSave, embedded = false }) => {
                     admin_contactNum: formattedNumber,
                     email: formData.email.trim().toLowerCase(),
                     password: formData.password,
-                    role: 'Admin',
-                    status: 'Active'
+                    role: 'ADMIN',
+                    status: 'ACTIVE'
                 })
             });
 
@@ -145,11 +145,28 @@ const Register = ({ onClose, onSave, embedded = false }) => {
     };
 
     // Dummy resend OTP handler
-    const handleResendOTP = () => {
-        // Add resend OTP logic here
-        setResendDisabled(true);
-        setResendTimer(30); // 30 seconds cooldown
+    const handleResendOTP = async () => {
+        try {
+            setResendDisabled(true);
+            setResendTimer(30);
+            toast("Resending OTP...");
+
+            const response = await fetchApi("/api/auth/send-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: formData.email })
+            });
+
+            if (!response.success) throw new Error(response.message || "Failed to resend OTP");
+
+            toast.success("OTP resent successfully!");
+        } catch (err) {
+            console.error(err);
+            toast.error(err.message || "Failed to resend OTP");
+            setResendDisabled(false);
+        }
     };
+
 
     return (
         <div className={embedded ? "w-full" : "min-h-screen bg-cover bg-center"}
