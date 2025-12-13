@@ -13,8 +13,8 @@ const supabase = createClient(
 );
 
 const Login = () => {
-    const [username, setUsername] = useState("admin");
-    const [password, setPassword] = useState("password");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
@@ -32,8 +32,6 @@ const Login = () => {
             return;
         }
 
-        console.log("ACCESS TOKEN RECEIVED FROM SUPABASE:", access_token);
-
         fetch(import.meta.env.VITE_SUPER_ADMIN_LOGIN, {
             method: "GET",
             headers: {
@@ -41,14 +39,13 @@ const Login = () => {
             },
         })
             .then(async (res) => {
-                console.log("Server Response Status:", res.status);
 
                 if (!res.ok) throw new Error("Unauthorized");
                 const data = await res.json();
-                console.log("Backend Response JSON:", data);
-
+                console.log(data.token)
                 toast.success(data.message);
-                localStorage.setItem("token", access_token);
+                localStorage.setItem("supabase_token", access_token);
+                localStorage.setItem("token", data.token);
                 navigate("/dashboard");
             })
             .catch((err) => {
@@ -66,11 +63,34 @@ const Login = () => {
         e.preventDefault();
         setError("");
 
-        if (username === "admin" && password === "password") {
-            navigate("/dashboard");
-        } else {
-            setError("Invalid login.");
-        }
+        toast.promise(
+            (async () => {
+                const response = await fetchApi('/api/public/super-admin/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                if (!response.message || !response.token) {
+                    throw new Error("Invalid response from server");
+                }
+                const token = response.token.replace('Bearer ', '');
+                localStorage.setItem("token", token);
+
+                await new Promise((resolve) => setTimeout(resolve, 800));
+
+                navigate("/dashboard");
+
+                return response;
+            })(),
+            {
+                loading: "Logging in...",
+                success: "Login successful!",
+                error: (err) => err.message || "Invalid credentials",
+            },
+        );
     };
 
     return (
@@ -108,14 +128,14 @@ const Login = () => {
                                     <p className="text-red-500 text-center font-semibold">{error}</p>
                                 )}
 
-                                {/* Username/Password Login */}
+                                {/* Email/Password Login */}
                                 <form onSubmit={handleLogin}>
                                     <Input
                                         type="text"
-                                        placeholder="Username/Email"
+                                        placeholder="Email"
                                         className="bg-gray-300 rounded-full"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         required
                                     />
 

@@ -10,7 +10,7 @@ import Login from './components/layout/Login';
 import Dashboard from './components/layout/dashboard';
 import RegisterLS from './components/layout/registerLS';
 import LaundryTable from './components/layout/LaundryTable';
-import { Toaster as SonnerToaster } from "sonner";
+import { Toaster } from './components/ui/sonner';
 
 function AppContent() {
   const location = useLocation();
@@ -65,7 +65,7 @@ function App() {
   return (
     <Router>
       {/* <Toaster position="top-right" /> */}
-      <SonnerToaster position="top-right" richColors />
+      <Toaster position="top-right" richColors />
       <AppContent />
     </Router>
   );
